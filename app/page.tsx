@@ -4,7 +4,8 @@ import { Footer } from '@/app/ui/footer'
 import { Button } from '@/app/ui/button'
 import { Card, CardContent, CardDescription } from '@/app/ui/card'
 import { Train, MapPin, Clock, Ticket, ChevronRight, Calendar } from 'lucide-react'
-import { stazioni, materialeRotabile } from '@/app/lib/placeholder-data'
+import Stazioni from './ui/home/stazioni';
+import { materialeRotabile } from '@/app/lib/placeholder-data'
 
 export default function HomePage() {
   return (
@@ -120,38 +121,9 @@ export default function HomePage() {
               </Link>
             </div>
 
-            <div className="relative">
-              {/* Line visualization */}
-              <div className="hidden lg:block absolute top-1/2 left-0 right-0 h-1 bg-primary/20 -translate-y-1/2" />
+            {/* Stazioni */}
+            <Stazioni/>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {stazioni.slice(0, 5).map((stazione) => (
-                  <div key={stazione.nome} className="relative flex flex-col items-center">
-                    <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary z-10" />
-                    <Card className="w-full hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">Km {stazione.km.toFixed(1)}</p>
-                        <p className="font-medium text-sm">{stazione.nome}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-                {stazioni.slice(5, 10).map((stazione) => (
-                  <div key={stazione.nome} className="relative flex flex-col items-center">
-                    <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary z-10" />
-                    <Card className="w-full hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 text-center">
-                        <p className="text-xs text-muted-foreground mb-1">Km {stazione.km.toFixed(1)}</p>
-                        <p className="font-medium text-sm">{stazione.nome}</p>
-                      </CardContent>
-                    </Card>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         </section>
 
@@ -176,17 +148,17 @@ export default function HomePage() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {materialeRotabile.filter(rs => rs.tipologia === 'locomotiva' || rs.tipologia === 'automotrice').map((item) => (
-                <Card key={item.modello} className="overflow-hidden group hover:shadow-lg transition-shadow">
-                  <div className="aspect-video bg-linear-to-br from-primary/10 to-primary/5 flex items-center justify-center">
+              {materialeRotabile.map((materiale) => (
+                <Card key={materiale.id} className="overflow-hidden group hover:shadow-lg transition-shadow">
+                  <div className="aspect-video bg-linear-to-br from-primary/10 to-primary/5 flex materiales-center justify-center">
                     <Train className="h-16 w-16 text-primary/40 group-hover:text-primary/60 transition-colors" />
                   </div>
                   <CardContent className="p-4">
-                    <p className="text-xs text-muted-foreground mb-1">Serie {item.modello} </p>
-                    <h3 className="font-semibold">{item.id}</h3>
+                    <p className="text-xs text-muted-foreground mb-1">Serie {materiale.id} </p>
+                    <h3 className="font-semibold">{materiale.id}</h3>
                   </CardContent>
                   <CardDescription className="p-4">
-                    <p className="text-xs text-muted-foreground mb-1">{item.descrizione}</p>
+                    <p className="text-xs text-muted-foreground mb-1">{materiale.descrizione}</p>
                   </CardDescription>
                 </Card>
               ))}
