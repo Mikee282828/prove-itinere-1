@@ -1,8 +1,10 @@
 
-export default function LineaPage(){
+export default function Esercizio(){
   return(
     <div>
-      Esercizio
+      <div>
+        
+      </div>
     </div>
   )
 }

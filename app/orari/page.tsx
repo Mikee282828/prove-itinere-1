@@ -1,8 +1,33 @@
 
-export default function LineaPage(){
-  return(
+export default function Orari() {
+  return (
     <div>
-      Orari
+      <table className="table-auto">
+        <thead>
+          <tr>
+            <th>Treni: </th>
+            <th></th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td></td>
+            <td></td>
+            <td></td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   )
 }
