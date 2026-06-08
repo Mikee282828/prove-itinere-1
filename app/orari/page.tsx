@@ -1,5 +1,5 @@
 
-export default function Orari() {
+export default function Page() {
   return (
     <div>
       <table className="table-auto">

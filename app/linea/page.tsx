@@ -1,5 +1,5 @@
 
-export default function Linea(){
+export default function Page(){
   return(
     <div>
       Linea

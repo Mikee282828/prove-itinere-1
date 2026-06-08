@@ -1,5 +1,5 @@
 
-export default function LineaPage(){
+export default function Page(){
   return(
     <div>
       Prenota
