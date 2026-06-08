@@ -8,19 +8,14 @@ export default async function Page(props: {
 }) {
   const searchParams = await props.searchParams;
   const query = searchParams?.datetime || "";
-
+  console.log(query)
   return (
     <div className="flex-1 py-4">
 
       <div className="relative mx-auto max-w-7xl px-4 lg:px-8">
         
         <Search/>
-        <Materiali materialeRotabile={[{
-          id: "B1",
-          tipologia: "carrozza",
-          modello: "1928",
-          descrizione: "Descrizione materiale rotabile",
-        }]} />
+        <Materiali query={query} />
       </div>
 
     </div>

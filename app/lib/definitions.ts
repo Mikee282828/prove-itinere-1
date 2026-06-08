@@ -102,7 +102,7 @@ export type Richiesta = {
 
 //16
 export type Subtratta = {
-  stato: "occupato"|"libero";
+  stato: string;
   stazione_a: "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
   stazione_b: "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
 }

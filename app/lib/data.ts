@@ -29,3 +29,17 @@ export async function fetchMateriale() : Promise<MaterialeRotabile[]>{
     throw new Error('Failed to fetch the latest invoices.');
   }
 }
+
+export async function fetchMaterialeConOrario(orario:string, data:string) : Promise<MaterialeRotabile[]>{
+  console.log(orario,data);
+  try {
+    const materiali = await sql`
+      SELECT id, modello, tipologia, descrizione
+      FROM materiale_rotabile
+      ORDER BY tipologia`;
+    return materiali as MaterialeRotabile[];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch the latest invoices.');
+  }
+}
