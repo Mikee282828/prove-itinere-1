@@ -37,31 +37,37 @@ export const treni: Treno[] = [
     codice: 1,
     convoglio: 1,
     data: new Date(),
+    subtratta: null
   },
   {
     codice: 1,
     convoglio: 1,
     data: new Date("2025-12-1"),
+    subtratta: null
   },
   {
     codice: 2,
     convoglio: 2,
     data: new Date(),
+    subtratta: null
   },
   {
     codice: 3,
     convoglio: 3,
     data: new Date(),
+    subtratta: null
   },
   {
     codice: 4,
     convoglio: 4,
     data: new Date(),
+    subtratta: null
   },
   {
     codice: 5,
     convoglio: 5,
     data: new Date(),
+    subtratta: null
   },
 ];
 //3
@@ -301,14 +307,166 @@ export const composizioni: Composizione[] = [
 ];
 //8
 export const traccePassate: TracciaPassata[] = [
+  // ==========================================
+  // CORSA DI ANDATA (Progressivo: 1)
+  // ==========================================
   {
-    partenza: "10:43:00",
-    arrivo: "10:40:00",
     stazione: "Torre Spaventa",
-    data: new Date("2025-12-1"), // anno-mese-giorno
+    arrivo: "10:40:00",
+    partenza: "10:43:00",
+    data: new Date("2025-12-01"),
     treno: 1,
     progressivo: 1,
   },
+  {
+    stazione: "Prato Terra",
+    arrivo: "10:55:00",
+    partenza: "10:57:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Rocca Pietrosa",
+    arrivo: "11:12:00",
+    partenza: "11:15:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Villa Pietrosa",
+    arrivo: "11:25:00",
+    partenza: "11:27:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Villa Santa Maria",
+    arrivo: "11:40:00",
+    partenza: "11:42:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Pietra Santa Maria",
+    arrivo: "11:55:00",
+    partenza: "11:58:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Castro Marino",
+    arrivo: "12:10:00",
+    partenza: "12:12:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Porto Spigola",
+    arrivo: "12:22:00",
+    partenza: "12:25:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Porto San Felice",
+    arrivo: "12:38:00",
+    partenza: "12:40:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+  {
+    stazione: "Villa San Felice",
+    arrivo: "12:55:00",
+    partenza: "13:15:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 1,
+  },
+
+  // ==========================================
+  // CORSA DI RITORNO (Progressivo: 2)
+  // Il treno ripassa dalle stesse stazioni al contrario
+  // ==========================================
+  {
+    stazione: "Porto San Felice",
+    arrivo: "13:30:00",
+    partenza: "13:32:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Porto Spigola",
+    arrivo: "13:45:00",
+    partenza: "13:47:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Castro Marino",
+    arrivo: "13:58:00",
+    partenza: "14:00:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Pietra Santa Maria",
+    arrivo: "14:12:00",
+    partenza: "14:15:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Villa Santa Maria",
+    arrivo: "14:28:00",
+    partenza: "14:30:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Villa Pietrosa",
+    arrivo: "14:43:00",
+    partenza: "14:45:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Rocca Pietrosa",
+    arrivo: "14:55:00",
+    partenza: "14:58:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Prato Terra",
+    arrivo: "15:13:00",
+    partenza: "15:15:00",
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  },
+  {
+    stazione: "Torre Spaventa",
+    arrivo: "15:30:00",
+    partenza: null, // Fine del servizio per questa coppia/giorno
+    data: new Date("2025-12-01"),
+    treno: 1,
+    progressivo: 2,
+  }
 ];
 //10
 export const prenotazioni: Prenotazione[] = [

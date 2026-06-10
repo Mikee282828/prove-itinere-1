@@ -8,6 +8,7 @@ export type Treno = {
   codice: number;
   data: Date;
   convoglio: number;
+  subtratta: number | null;
 };
 
 //3
@@ -46,7 +47,7 @@ export type Composizione = {
 
 //8
 export type TracciaPassata = {
-  partenza: string;
+  partenza: string | null;
   arrivo: string;
   stazione: string;
   data: Date;
@@ -56,7 +57,7 @@ export type TracciaPassata = {
 
 //9
 export type TracciaCorrente = {
-  partenza: string;
+  partenza: string | null;
   arrivo: string;
   stazione: string;
   data: Date;

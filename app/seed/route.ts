@@ -26,9 +26,10 @@ export async function GET() {
     transactionQueries.push(sql`CREATE TABLE IF NOT EXISTS convoglio (id BIGSERIAL PRIMARY KEY);`);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS treno (
-        data      TIMESTAMP    NOT NULL,
+        data      DATE    NOT NULL,
         codice    INT     NOT NULL,
         convoglio BIGINT  NOT NULL,
+        subtratta INT,
         PRIMARY KEY (codice, data),
         FOREIGN KEY (convoglio) REFERENCES convoglio(id)
       );
@@ -79,9 +80,9 @@ export async function GET() {
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_passata (
         orario_arrivo   TIME         NOT NULL,
-        orario_partenza TIME         NOT NULL,
+        orario_partenza TIME,
         stazione        VARCHAR(255) NOT NULL,
-        data            TIMESTAMP         NOT NULL,
+        data            DATE         NOT NULL,
         treno           INT          NOT NULL,
         progressivo     INT          NOT NULL,
         PRIMARY KEY (progressivo, treno, data, stazione),
@@ -92,10 +93,10 @@ export async function GET() {
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_corrente (
         orario_arrivo   TIME         NOT NULL,
-        orario_partenza TIME         NOT NULL,
+        orario_partenza TIME,
         stazione        VARCHAR(255) NOT NULL,
         treno           INT          NOT NULL,
-        data            TIMESTAMP         NOT NULL,
+        data            DATE         NOT NULL,
         progressivo     INT          NOT NULL,
         PRIMARY KEY (progressivo, data, treno, stazione),
         FOREIGN KEY (stazione)    REFERENCES stazione(nome),
@@ -107,7 +108,7 @@ export async function GET() {
         posto                      INTEGER      NOT NULL,
         id_mat                     VARCHAR(255) NOT NULL,
         biglietto                  BIGINT       NOT NULL,
-        data                       TIMESTAMP         NOT NULL,
+        data                       DATE         NOT NULL,
         treno                      INT          NOT NULL,
         PRIMARY KEY (biglietto),
         FOREIGN KEY (biglietto)   REFERENCES biglietto(codice),
@@ -169,10 +170,11 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS subtratta (
+        id              SMALLSERIAL,
         stazione_a      VARCHAR(255) NOT NULL,
         stazione_b      VARCHAR(255) NOT NULL,
         stato           VARCHAR(255) NOT NULL,
-        PRIMARY KEY (stazione_a,stazione_b),
+        PRIMARY KEY (id),
         FOREIGN KEY (stazione_a) REFERENCES stazione(nome),
         FOREIGN KEY (stazione_b) REFERENCES stazione(nome)
       );
@@ -185,7 +187,7 @@ export async function GET() {
     });
 
     treni.forEach((t) => {
-      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data) VALUES (${t.codice}, ${t.convoglio}, ${t.data}) ON CONFLICT (codice,data) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data, subtratta) VALUES (${t.codice}, ${t.convoglio}, ${t.data}, ${t.subtratta}) ON CONFLICT (codice,data) DO NOTHING;`);
     });
 
     stazioni.forEach((s) => {
@@ -231,7 +233,7 @@ export async function GET() {
     });
 
     subtratte.forEach((sb) => {
-      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, stato) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.stato}) ON CONFLICT (stazione_a, stazione_b) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, stato) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.stato}) ON CONFLICT (id) DO NOTHING;`);
     });
 
     await sql.transaction(transactionQueries);
