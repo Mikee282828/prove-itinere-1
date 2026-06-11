@@ -282,10 +282,6 @@ export const composizioni: Composizione[] = [
   },
   {
     convoglio: 3,
-    id_mat: "C6",
-  },
-  {
-    convoglio: 3,
     id_mat: "CD2",
   },
 
