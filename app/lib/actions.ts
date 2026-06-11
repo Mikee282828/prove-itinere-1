@@ -8,7 +8,7 @@ import z from "zod";
 const sql = neon(process.env.DATABASE_URL || "");
 
 const FormSchema = z.object({
-    materiale: z.array(z.string("Selezionare almeno uno dei materiali rotabili disponibili")),
+    materiale: z.array(z.string("Selezionare almeno uno dei materiali rotabili disponibili")).nonempty(),
 });
 
 export type State = {
@@ -32,6 +32,7 @@ export async function createConvoglio(prevState: State, formData: FormData) {
     }
 
     const { materiale } = validatedFields.data;
+    console.log(materiale);
 
     try {
         const convoglioInserito = await sql`INSERT INTO convoglio DEFAULT VALUES RETURNING id`;
@@ -52,6 +53,5 @@ export async function createConvoglio(prevState: State, formData: FormData) {
     }
     revalidatePath("/esercizio"); // clear cached path
     redirect("/esercizio"); // redirect
-
 
 }
