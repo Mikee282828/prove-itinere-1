@@ -31,20 +31,20 @@ export async function fetchMateriale(): Promise<MaterialeRotabile[]> {
 
 export async function fetchMaterialeEsercizio(data: string, inizio: string, fine: string): Promise<MaterialeRotabile[]> {
 
-  if(!data || !inizio || !fine || inizio>fine) return [];
+  if (!data || !inizio || !fine || inizio > fine) return [];
 
   try {
     const materiali = await sql`
-      SELECT mat.* FROM materiale_rotabile AS mat
-      INNER JOIN composizione ON mat.id = composizione.id_mat
-      INNER JOIN convoglio ON composizione.convoglio = convoglio.id
+      SELECT DISTINCT mat.* FROM materiale_rotabile AS mat
+      WHERE mat.id NOT IN(
+      SELECT DISTINCT comp.id_mat 
+      FROM composizione AS comp
+      INNER JOIN convoglio ON comp.convoglio = convoglio.id
       INNER JOIN treno ON convoglio.id = treno.convoglio
       INNER JOIN traccia_passata as traccia ON treno.data = traccia.data AND treno.codice = traccia.treno
       WHERE traccia.data = ${data}
-        AND traccia.stazione = 'Torre Spaventa'
-        AND ((traccia.progressivo=2 AND traccia.orario_arrivo<= ${inizio}) 
-        OR (traccia.progressivo=1 AND traccia.orario_partenza>=${fine}))
-      `;
+        AND (traccia.orario_arrivo > ${inizio} AND traccia.orario_arrivo<${fine})
+  )`;
     return materiali as MaterialeRotabile[];
   } catch (error) {
     console.error('Database Error:', error);

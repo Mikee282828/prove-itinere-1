@@ -35,51 +35,48 @@ export default function Materiali({
     }
   };
 
-  if (materialeRotabile) {
+  if (materialeRotabile && materialeRotabile.length > 0) {
     return (
       <form action={formAction}>
+        Sono stati trovati {materialeRotabile.length} elementi
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {materialeRotabile.length == 0 ? (
-            <div className="text-red-500"> Nessun elemento trovato</div>
-          ) : (
-            materialeRotabile?.map((materiale) => (
-              <Card
-                key={materiale.id}
-                className="overflow-hidden group hover:shadow-lg transition-shadow"
-              >
-                <CardContent>
-                  Seleziona{" "}
-                  <input
-                    type="checkbox"
-                    name="materiale"
-                    id={materiale.id}
-                    value={materiale.id}
-                    className="cursor-pointer"
-                    onChange={(e) => {
-                      handleCheckboxChange(materiale.id, e.target.checked);
-                    }}
-                  />
-                </CardContent>
-                <div className="aspect-video bg-linear-to-br from-primary/10 to-primary/5 flex materiales-center justify-center">
-                  <Train className="h-16 w-16 text-primary/40 group-hover:text-primary/60 transition-colors" />
-                </div>
-                <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Serie {materiale.modello}{" "}
-                  </p>
-                  <h3 className="font-semibold">{materiale.id}</h3>
-                  <p className="text-xs text-muted-foreground mb-1">
-                    Tipologia {materiale.tipologia}
-                  </p>
-                </CardContent>
-                <CardDescription className="p-4">
-                  <p className="text-xs text-muted-foreground mb-1">
-                    {materiale.descrizione}
-                  </p>
-                </CardDescription>
-              </Card>
-            ))
-          )}
+          {materialeRotabile?.map((materiale) => (
+            <Card
+              key={materiale.id}
+              className="overflow-hidden group hover:shadow-lg transition-shadow"
+            >
+              <CardContent>
+                Seleziona{" "}
+                <input
+                  type="checkbox"
+                  name="materiale"
+                  id={materiale.id}
+                  value={materiale.id}
+                  className="cursor-pointer"
+                  onChange={(e) => {
+                    handleCheckboxChange(materiale.id, e.target.checked);
+                  }}
+                />
+              </CardContent>
+              <div className="aspect-video bg-linear-to-br from-primary/10 to-primary/5 flex materiales-center justify-center">
+                <Train className="h-16 w-16 text-primary/40 group-hover:text-primary/60 transition-colors" />
+              </div>
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-1">
+                  Serie {materiale.modello}{" "}
+                </p>
+                <h3 className="font-semibold">{materiale.id}</h3>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Tipologia {materiale.tipologia}
+                </p>
+              </CardContent>
+              <CardDescription className="p-4">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {materiale.descrizione}
+                </p>
+              </CardDescription>
+            </Card>
+          ))}
         </div>
         <Button
           type="submit"
@@ -98,11 +95,14 @@ export default function Materiali({
         >
           Devi selezionare almeno 1 materiale!
         </div>
-        <div className={`${cliccato ? "block" : "hidden"}`}>
-          Sono selezionati {selezionati.length} elementi
-        </div>
-        <div>{state.errors?.materiale}</div>
+        <div>Sono selezionati {selezionati.length} elementi</div>
+        <div>{state.message}</div>
       </form>
     );
+  }
+  else if(materialeRotabile){
+    return(
+       <div className="text-red-500"> Nessun elemento trovato</div>
+    )
   }
 }
