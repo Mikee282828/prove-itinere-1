@@ -1,4 +1,4 @@
-import { Composizione, MaterialeRotabile, Stazione } from "./definitions";
+import { MaterialeRotabile, Stazione } from "./definitions";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
