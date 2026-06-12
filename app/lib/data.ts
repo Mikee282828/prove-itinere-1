@@ -1,4 +1,4 @@
-import { MaterialeRotabile, Stazione } from "./definitions";
+import { MaterialeRotabile, Stazione, TracciaCorrente } from "./definitions";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -65,6 +65,20 @@ export async function fetchComposizioni(): Promise<ConvoglioRaggruppato[]> {
     GROUP BY convoglio
     ORDER BY convoglio;`;
     return composizioni as ConvoglioRaggruppato[];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch data.');
+  }
+}
+
+export async function fetchTracceCorrenti(): Promise<TracciaCorrente[]> {
+  try {
+    const tracce = await sql`
+    SELECT * FROM traccia_passata
+    ORDER BY progressivo
+    `
+    console.log(tracce)
+    return tracce as TracciaCorrente[]
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch data.');

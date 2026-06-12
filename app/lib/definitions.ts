@@ -47,8 +47,8 @@ export type Composizione = {
 
 //8
 export type TracciaPassata = {
-  partenza: string | null;
-  arrivo: string | null;
+  orario_partenza: string | null;
+  orario_arrivo: string | null;
   stazione: string;
   data: Date;
   treno: number;
@@ -57,8 +57,8 @@ export type TracciaPassata = {
 
 //9
 export type TracciaCorrente = {
-  partenza: string | null;
-  arrivo: string | null;
+  orario_partenza: string | null;
+  orario_arrivo: string | null;
   stazione: string;
   data: Date;
   treno: number;

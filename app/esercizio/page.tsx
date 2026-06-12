@@ -2,8 +2,9 @@ import {
   ConvoglioRaggruppato,
   fetchComposizioni,
   fetchMaterialeEsercizio,
+  fetchTracceCorrenti,
 } from "../lib/data";
-import { MaterialeRotabile } from "../lib/definitions";
+import { MaterialeRotabile, TracciaCorrente } from "../lib/definitions";
 import Pagine from "../ui/esercizio/pagine";
 
 export default async function Page(props: {
@@ -20,7 +21,8 @@ export default async function Page(props: {
 
   let materialeRotabile: MaterialeRotabile[] | null = null;
   const composizioni: ConvoglioRaggruppato[] = await fetchComposizioni();
-  console.log(composizioni);
+  const tracce: TracciaCorrente[] = await fetchTracceCorrenti();
+
   if (data && inizio && fine) {
     materialeRotabile = await fetchMaterialeEsercizio(data, inizio, fine);
   }
@@ -30,6 +32,7 @@ export default async function Page(props: {
       <Pagine
         materialeRotabile={materialeRotabile}
         composizioni={composizioni}
+        tracce={tracce}
       />
     </div>
   );
