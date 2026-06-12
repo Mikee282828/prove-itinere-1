@@ -1,4 +1,4 @@
-import { MaterialeRotabile, Stazione } from "./definitions";
+import { Composizione, MaterialeRotabile, Stazione } from "./definitions";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -46,6 +46,25 @@ export async function fetchMaterialeEsercizio(data: string, inizio: string, fine
         AND (traccia.orario_arrivo > ${inizio} AND traccia.orario_arrivo<${fine})
   )`;
     return materiali as MaterialeRotabile[];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch data.');
+  }
+}
+
+export type ConvoglioRaggruppato = {
+  convoglio: string;   // l'ID del convoglio (es: '1', '2')
+  materiali: string[]; // l'array di stringhe (es: ['Cavour', 'B1'])
+};
+
+export async function fetchComposizioni(): Promise<ConvoglioRaggruppato[]> {
+  try {
+    const composizioni = await sql`
+    SELECT convoglio, json_agg(id_mat) AS materiali 
+    FROM composizione
+    GROUP BY convoglio
+    ORDER BY convoglio;`;
+    return composizioni as ConvoglioRaggruppato[];
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch data.');

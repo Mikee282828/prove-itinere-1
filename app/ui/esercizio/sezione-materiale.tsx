@@ -3,7 +3,7 @@ import Search from "../search";
 import Materiali from "./materiali";
 import { MaterialeRotabile } from "@/app/lib/definitions";
 
-export default function SezioneConvogli({
+export default function SezioneMateriale({
   materialeRotabile,
   active,
 }: {

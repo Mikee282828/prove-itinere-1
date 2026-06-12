@@ -2,15 +2,19 @@
 import { MaterialeRotabile } from "@/app/lib/definitions";
 import { Calendar, Settings, TrainIcon } from "lucide-react";
 import { useState } from "react";
-import SezioneConvogli from "./crea-convoglio";
+import SezioneMateriale from "./sezione-materiale";
+import SezioneConvoglio from "./sezione-composizione";
+import { ConvoglioRaggruppato } from "@/app/lib/data";
 
-type TabType = "orari" | "composizioni" | "materiale";
+export type TabType = "orari" | "composizioni" | "materiale";
 export default function Pagine({
   materialeRotabile,
+  composizioni
 }: {
-  materialeRotabile: MaterialeRotabile[] | null;
+  materialeRotabile: MaterialeRotabile[] | null,
+  composizioni: ConvoglioRaggruppato[]
 }) {
-  const [activeTab, setActiveTab] = useState<TabType>("orari");
+  const [activeTab, setActiveTab] = useState<TabType>("composizioni");
   return (
     <div>
       <main>
@@ -32,8 +36,8 @@ export default function Pagine({
           <div className="mx-auto max-w-7xl px-4 lg:px-8">
             <div className="flex gap-1">
               {[
-                { key: "orari", label: "Orari", icon: Calendar },
                 { key: "composizioni", label: "Composizioni", icon: TrainIcon },
+                { key: "orari", label: "Orari", icon: Calendar },
                 { key: "materiale", label: "Materiale Rotabile", icon: Settings },
               ].map((tab) => {
                 const Icon = tab.icon;
@@ -55,7 +59,8 @@ export default function Pagine({
             </div>
           </div>
         </section>
-        <SezioneConvogli materialeRotabile={materialeRotabile} active={activeTab==="materiale"}/>
+        <SezioneMateriale active={activeTab==="materiale"} materialeRotabile={materialeRotabile}/>
+        <SezioneConvoglio active={activeTab==="composizioni"} composizioni={composizioni} />
       </main>
     </div>
   );
