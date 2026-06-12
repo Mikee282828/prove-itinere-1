@@ -308,7 +308,7 @@ export const traccePassate: TracciaPassata[] = [
   // ==========================================
   {
     stazione: "Torre Spaventa",
-    arrivo: "10:40:00",
+    arrivo: null,
     partenza: "10:43:00",
     data: new Date("2025-12-01"),
     treno: 1,

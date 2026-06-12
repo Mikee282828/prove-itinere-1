@@ -79,7 +79,7 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_passata (
-        orario_arrivo   TIME         NOT NULL,
+        orario_arrivo   TIME,
         orario_partenza TIME,
         stazione        VARCHAR(255) NOT NULL,
         data            DATE         NOT NULL,
@@ -92,7 +92,7 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_corrente (
-        orario_arrivo   TIME         NOT NULL,
+        orario_arrivo   TIME,
         orario_partenza TIME,
         stazione        VARCHAR(255) NOT NULL,
         treno           INT          NOT NULL,
