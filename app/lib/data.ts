@@ -74,23 +74,11 @@ export async function fetchComposizioni(): Promise<ConvoglioRaggruppato[]> {
 export async function fetchTracceCorrenti(data: string): Promise<TracciaCorrente[]> {
   try {
     const tracce = await sql`
-    SELECT * from traccia_passata
-    WHERE data = ${data};
+    SELECT * from traccia_corrente
+    WHERE data = ${data} AND data >= NOW()::DATE;
     `
     console.log(tracce);
     return tracce as TracciaCorrente[]
-  } catch (error) {
-    console.error('Database Error:', error);
-    throw new Error('Failed to fetch data.');
-  }
-}
-
-export async function fetchTreni(data: string) : Promise<Treno[]>{
-  try {
-    const treni = await sql`
-    SELECT * FROM treno WHERE treno.data = ${data}
-    `;
-    return treni as Treno[];
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch data.');
