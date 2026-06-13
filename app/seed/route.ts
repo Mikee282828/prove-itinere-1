@@ -12,6 +12,7 @@ import {
   utenti,
   acquisti,
   subtratte,
+  tracceCorrenti,
 } from "../lib/placeholder-data";
 import bcrypt from "bcrypt";
 
@@ -211,7 +212,11 @@ export async function GET() {
     });
 
     traccePassate.forEach((tr) => {
-      transactionQueries.push(sql`INSERT INTO traccia_passata (orario_arrivo, orario_partenza, stazione, data, treno, progressivo) VALUES (${tr.arrivo}, ${tr.partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}, ${tr.progressivo}) ON CONFLICT (progressivo, treno, data, stazione) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO traccia_passata (orario_arrivo, orario_partenza, stazione, data, treno, progressivo) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}, ${tr.progressivo}) ON CONFLICT (progressivo, treno, data, stazione) DO NOTHING;`);
+    });
+
+    tracceCorrenti.forEach((tr) => {
+      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo, orario_partenza, stazione, data, treno, progressivo) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}, ${tr.progressivo}) ON CONFLICT (progressivo, treno, data, stazione) DO NOTHING;`);
     });
 
     prenotazioni.forEach((pr) => {

@@ -12,7 +12,9 @@ import {
   Biglietto,
   Acquisto,
   Subtratta,
+  TracciaCorrente,
 } from "@/app/lib/definitions";
+import { generaTracce, generaTreno } from "./utils";
 //1
 export const convogli: Convoglio[] = [
   {
@@ -69,6 +71,7 @@ export const treni: Treno[] = [
     data: new Date(),
     subtratta: null
   },
+  ...generaTreno(new Date("2070-01-01"),new Date("2070-01-31"),1,1)
 ];
 //3
 export const stazioni: Stazione[] = [
@@ -464,6 +467,8 @@ export const traccePassate: TracciaPassata[] = [
     progressivo: 2,
   }
 ];
+//9
+export const tracceCorrenti: TracciaCorrente[] = generaTracce(new Date("2070-01-01"),new Date("2070-01-31"));
 //10
 export const prenotazioni: Prenotazione[] = [
   {
