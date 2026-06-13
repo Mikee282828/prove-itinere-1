@@ -1,5 +1,5 @@
 "use client";
-import { MaterialeRotabile, TracciaCorrente } from "@/app/lib/definitions";
+import { MaterialeRotabile, TracciaCorrente, Treno } from "@/app/lib/definitions";
 import { Calendar, Settings, TrainIcon } from "lucide-react";
 import { useState } from "react";
 import SezioneMateriale from "./sezione-materiale";
@@ -11,11 +11,11 @@ export type TabType = "orari" | "composizioni" | "materiale";
 export default function Pagine({
   materialeRotabile,
   composizioni,
-  tracce
+  tracce,
 }: {
   materialeRotabile: MaterialeRotabile[] | null,
   composizioni: ConvoglioRaggruppato[],
-  tracce: TracciaCorrente[]
+  tracce: TracciaCorrente[] | null,
 }) {
   const [activeTab, setActiveTab] = useState<TabType>("composizioni");
   return (

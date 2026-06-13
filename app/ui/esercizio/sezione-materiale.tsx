@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Search from "../search";
+import Search from "./cerca/search";
 import Materiali from "./materiali";
 import { MaterialeRotabile } from "@/app/lib/definitions";
 

@@ -4,11 +4,12 @@ import {
   fetchMaterialeEsercizio,
   fetchTracceCorrenti,
 } from "../lib/data";
-import { MaterialeRotabile, TracciaCorrente } from "../lib/definitions";
+import { MaterialeRotabile, TracciaCorrente} from "../lib/definitions";
 import Pagine from "../ui/esercizio/pagine";
 
 export default async function Page(props: {
   searchParams?: Promise<{
+    dataTreno?: string;
     data?: string;
     inizio?: string;
     fine?: string;
@@ -18,13 +19,16 @@ export default async function Page(props: {
   const data = searchParams?.data || "";
   const inizio = searchParams?.inizio || "";
   const fine = searchParams?.fine || "";
+  const dataTreno = searchParams?.dataTreno || "";
 
   let materialeRotabile: MaterialeRotabile[] | null = null;
+  let tracce: TracciaCorrente[] | null = null;
   const composizioni: ConvoglioRaggruppato[] = await fetchComposizioni();
-  const tracce: TracciaCorrente[] = await fetchTracceCorrenti();
 
   if (data && inizio && fine) {
     materialeRotabile = await fetchMaterialeEsercizio(data, inizio, fine);
+  } else if (dataTreno) {
+    tracce = await fetchTracceCorrenti(dataTreno);
   }
 
   return (

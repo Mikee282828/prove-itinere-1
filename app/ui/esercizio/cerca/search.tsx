@@ -2,7 +2,7 @@
 
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { Button } from "./button";
+import { Button } from "../../button";
 
 export default function Search() {
   const searchParams = useSearchParams(); // Allows you to access the parameters of the current URL
@@ -79,9 +79,7 @@ export default function Search() {
           Cerca
         </Button>
       </div>
-      <div className="text-red-500">
-        {errore}
-      </div>
+      <div className="text-red-500">{errore}</div>
     </div>
   );
 }

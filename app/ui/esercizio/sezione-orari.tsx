@@ -1,16 +1,18 @@
-import { TracciaCorrente } from "@/app/lib/definitions";
+import { TracciaCorrente, Treno } from "@/app/lib/definitions";
+import Search from "./cerca/searchTreno";
 
 export default function SezioneOrari({
   active,
   tracce,
 }: {
-  active: boolean;
-  tracce: TracciaCorrente[];
+  active: boolean,
+  tracce: TracciaCorrente[] | null,
 }) {
   if (active) {
     return (
       <div className="p-8">
-        {tracce.map((traccia, index) => (
+        <Search/>
+        {tracce?.map((traccia, index) => (
           <div key={index}>
             <div>arrivo: {traccia.orario_arrivo?.slice(0,5)}</div>
             <div>partenza : {traccia.orario_partenza?.slice(0,5)}</div>
