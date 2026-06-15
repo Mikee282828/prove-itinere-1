@@ -55,3 +55,48 @@ export async function createConvoglio(prevState: State, formData: FormData) {
     redirect("/esercizio"); // redirect
 
 }
+
+const corsaSchema = z.object({
+    data: z.coerce.date("Inserire la data!"),
+    'codiceTreno': z.coerce.number("Inserire un numero compreso tra 1 e 20").int().max(20).min(1),
+    convoglio: z.coerce.number("Inserire un numero convoglio valido!").int().min(1),
+});
+
+export type StateCorsa = {
+    errors?: {
+        data?: string[],
+        codiceTreno?: string[],
+        convoglio?: string[]
+    };
+    message?: string | null;
+};
+
+export async function createCorsa(prevState: StateCorsa, formData: FormData) {
+
+    const validatedFields = corsaSchema.safeParse({
+        data: formData.get("data"),
+        codiceTreno: formData.get("codiceTreno"),
+        convoglio: formData.get("convoglio"),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            errors: validatedFields.error.flatten().fieldErrors,
+            message: "Campi mancanti. Creazione corsa fallita."
+        }
+    }
+
+    const { data, codiceTreno, convoglio } = validatedFields.data;
+
+    try {
+        console.log(data,codiceTreno,convoglio);
+    } catch (error) {
+        return {
+            message: "Errore. Impossibile creare la corsa",
+            error: error,
+        };
+    }
+    revalidatePath("/esercizio"); // clear cached path
+    redirect("/esercizio"); // redirect
+
+}

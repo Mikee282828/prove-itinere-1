@@ -1,16 +1,28 @@
+"use client";
 import { ChevronDownIcon } from "@heroicons/react/16/solid";
 import { Button } from "../button";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
 import { DaUnoAVenti } from "@/app/lib/definitions";
+import { createCorsa, StateCorsa } from "@/app/lib/actions";
+import { useActionState } from "react";
 
-export default function Form({convogli} : {convogli: ConvoglioRaggruppato[]}) {
-  const codiciTreni : DaUnoAVenti[] = Array.from({ length: 20 }, (_, i) => i + 1) as DaUnoAVenti[];
+export default function Form({
+  convogli,
+}: {
+  convogli: ConvoglioRaggruppato[];
+}) {
+  const initialState : StateCorsa = { message: null, errors: {} };
+  const [state, formAction] = useActionState(createCorsa, initialState);
+  const codiciTreni: DaUnoAVenti[] = Array.from(
+    { length: 20 },
+    (_, i) => i + 1,
+  ) as DaUnoAVenti[];
   return (
-    <form className="flex-1 p-8">
+    <form className="flex-1 p-8" action={formAction}>
       <div className="space-y-12">
         <div className="border-b border-gray-900/10 pb-12">
           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-2">
               <label
                 htmlFor="data"
                 className="block text-sm/6 font-medium text-gray-900"
@@ -25,30 +37,48 @@ export default function Form({convogli} : {convogli: ConvoglioRaggruppato[]}) {
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 />
               </div>
+              <div>
+                {state.errors?.data &&
+                  state.errors.data.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
             </div>
 
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-2">
               <label
-                htmlFor="codice-treno"
+                htmlFor="codiceTreno"
                 className="block text-sm/6 font-medium text-gray-900"
               >
                 Codice treno
               </label>
               <div className="mt-2 grid grid-cols-1">
                 <select
-                  id="codice-treno"
-                  name="codice-treno"
+                  id="codiceTreno"
+                  name="codiceTreno"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 >
-                 {codiciTreni.map((codici)=>(<option key={codici}>{codici}</option>))}
+                  {codiciTreni.map((codici) => (
+                    <option key={codici}>{codici}</option>
+                  ))}
                 </select>
                 <ChevronDownIcon
                   aria-hidden="true"
                   className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
                 />
+                <div>
+                  {state.errors?.codiceTreno &&
+                    state.errors.codiceTreno.map((error: string) => (
+                      <p className="mt-2 text-sm text-red-500" key={error}>
+                        {error}
+                      </p>
+                    ))}
+                </div>
               </div>
             </div>
-            <div className="sm:col-span-1">
+            <div className="sm:col-span-2">
               <label
                 htmlFor="convoglio"
                 className="block text-sm/6 font-medium text-gray-900"
@@ -61,12 +91,24 @@ export default function Form({convogli} : {convogli: ConvoglioRaggruppato[]}) {
                   name="convoglio"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
                 >
-                 {convogli.map((convoglio)=>(<option key={convoglio.convoglio}>{convoglio.convoglio}</option>))}
+                  {convogli.map((convoglio) => (
+                    <option key={convoglio.convoglio}>
+                      {convoglio.convoglio}
+                    </option>
+                  ))}
                 </select>
                 <ChevronDownIcon
                   aria-hidden="true"
                   className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
                 />
+                <div>
+                  {state.errors?.convoglio &&
+                    state.errors.convoglio.map((error: string) => (
+                      <p className="mt-2 text-sm text-red-500" key={error}>
+                        {error}
+                      </p>
+                    ))}
+                </div>
               </div>
             </div>
           </div>
