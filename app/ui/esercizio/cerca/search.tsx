@@ -12,12 +12,12 @@ export default function Search() {
   const inizio = useRef<HTMLInputElement>(null);
   const fine = useRef<HTMLInputElement>(null);
   const [errore, setErrore] = useState("");
-
   function handleSearch() {
     const giorno = data.current?.value || "";
     const start = inizio.current?.value || "";
     const end = fine.current?.value || "";
     const params = new URLSearchParams(searchParams);
+    params.delete("dataTreno");
     if (start && end && giorno) {
       params.set("data", giorno);
       params.set("inizio", start);

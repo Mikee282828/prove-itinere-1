@@ -3,6 +3,7 @@
 import { useSearchParams, usePathname, useRouter } from "next/navigation";
 import { useRef, useState } from "react";
 import { Button } from "../../button";
+import Link from "next/link";
 
 export default function Search() {
   const searchParams = useSearchParams(); // Allows you to access the parameters of the current URL
@@ -14,6 +15,9 @@ export default function Search() {
   function handleSearch() {
     const dataEffettivo = data.current?.value || "";
     const params = new URLSearchParams(searchParams);
+    params.delete("data");
+    params.delete("inizio");
+    params.delete("fine");
     if (dataEffettivo) {
       params.set("dataTreno", dataEffettivo);
       setErrore("");
@@ -40,13 +44,14 @@ export default function Search() {
             className="cursor-pointer mr-2 flex h-10 items-center rounded-lg bg-amber-50 px-4 text-sm font-medium text-black transition-colors focus-visible:outline-amber-100 active:bg-amber-200"
           />
         </div>
-        <Button className="" onClick={handleSearch}>
+        <Button className="mr-2" onClick={handleSearch}>
           Cerca
         </Button>
+        <Button className="">
+          <Link href="/esercizio/crea-corsa">Crea Corsa</Link>
+        </Button>
       </div>
-      <div className="text-red-500">
-        {errore}
-      </div>
+      <div className="text-red-500">{errore}</div>
     </div>
   );
 }
