@@ -37,7 +37,7 @@ export async function createConvoglio(prevState: State, formData: FormData) {
     try {
         const convoglioInserito = await sql`INSERT INTO convoglio DEFAULT VALUES RETURNING id`;
         console.log(convoglioInserito);
-        Promise.all(
+        await Promise.all(
             materiale.map(async (mat) => {
                 await sql`
                 INSERT INTO composizione (convoglio, id_mat)
