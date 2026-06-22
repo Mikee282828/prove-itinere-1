@@ -14,7 +14,7 @@ import {
   Subtratta,
   TracciaCorrente,
 } from "@/app/lib/definitions";
-import { generaTracce, generaTreno } from "./utils";
+import { generaSubtratte, generaTracce, generaTreno } from "./utils";
 //1
 export const convogli: Convoglio[] = [
   {
@@ -71,7 +71,7 @@ export const treni: Treno[] = [
     data: new Date(),
     subtratta: null
   },
-  ...generaTreno(new Date("2070-01-01"),new Date("2070-01-31"),1,1)
+  ...generaTreno(new Date("2070-01-01"),new Date("2070-01-31"))
 ];
 //3
 export const stazioni: Stazione[] = [
@@ -500,14 +500,4 @@ export const acquisti: Acquisto[] = [
   },
 ];
 //16
-export const subtratte: Subtratta[] = [
-  { stato: "libero", stazione_a: "Torre Spaventa", stazione_b: "Prato Terra" },
-  { stato: "libero", stazione_a: "Prato Terra", stazione_b: "Rocca Pietrosa" },
-  { stato: "libero", stazione_a: "Rocca Pietrosa", stazione_b: "Villa Pietrosa" },
-  { stato: "libero", stazione_a: "Villa Pietrosa", stazione_b: "Villa Santa Maria" },
-  { stato: "libero", stazione_a: "Villa Santa Maria", stazione_b: "Pietra Santa Maria" },
-  { stato: "libero", stazione_a: "Pietra Santa Maria", stazione_b: "Castro Marino" },
-  { stato: "libero", stazione_a: "Castro Marino", stazione_b: "Porto Spigola" },
-  { stato: "libero", stazione_a: "Porto Spigola", stazione_b: "Porto San Felice" },
-  { stato: "libero", stazione_a: "Porto San Felice", stazione_b: "Villa San Felice" }
-];
+export const subtratte: Subtratta[] = generaSubtratte(new Date("2070-01-01"),new Date("2070-01-31"));

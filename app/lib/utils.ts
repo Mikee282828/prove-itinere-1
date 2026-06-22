@@ -1,7 +1,7 @@
 // utility functions
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { TracciaCorrente, Treno } from './definitions';
+import { NomiStazioni, Subtratta, TracciaCorrente, Treno } from './definitions';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -31,23 +31,23 @@ const modelloGiornaliero = [
   { stazione: "Torre Spaventa", arrivo: "15:30:00", partenza: null, prog: 2 }
 ];
 
-export function generaTracce(dataInizio : Date,dataFine : Date): TracciaCorrente[] {
+export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
 
-  if(dataInizio>dataFine) {
-    const temp : Date = dataInizio; 
+  if (dataInizio > dataFine) {
+    const temp: Date = dataInizio;
     dataInizio = dataFine;
     dataFine = temp;
   }
 
   const tutteLeTracce: TracciaCorrente[] = [];
-  for (let giorni = 0; giorni <= (dataFine.getTime()-dataInizio.getTime())/(1000*3600*24); giorni++) {
+  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
 
     modelloGiornaliero.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
         orario_arrivo: modello.arrivo,
         orario_partenza: modello.partenza,
-        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000)*giorni),
+        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
         treno: 1,
         progressivo: modello.prog
       });
@@ -57,23 +57,46 @@ export function generaTracce(dataInizio : Date,dataFine : Date): TracciaCorrente
   return tutteLeTracce;
 }
 
-export function generaTreno(dataInizio : Date,dataFine : Date, codiceTreno : number, convoglio: number): Treno[] {
+export function generaTreno(dataInizio: Date, dataFine: Date): Treno[] {
 
-  if(dataInizio>dataFine) {
-    const temp : Date = dataInizio; 
+  if (dataInizio > dataFine) {
+    const temp: Date = dataInizio;
     dataInizio = dataFine;
     dataFine = temp;
   }
 
   const treni: Treno[] = [];
 
-  for (let giorni = 0; giorni <= (dataFine.getTime()-dataInizio.getTime())/(1000*3600*24); giorni++) {
-      treni.push({
-        codice: codiceTreno,
-        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000)*giorni),
-        convoglio: convoglio,
-        subtratta: null
-      });
+  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
+    treni.push({
+      codice: 1,
+      data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+      convoglio: 1,
+      subtratta: null
+    });
   }
   return treni
+}
+
+export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
+  if (dataInizio > dataFine) {
+    const temp: Date = dataInizio;
+    dataInizio = dataFine;
+    dataFine = temp;
+  }
+
+  const subtratte: Subtratta[] = [];
+  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
+
+    for (let i = 0; i < (modelloGiornaliero.length-1); i++) {
+      subtratte.push({
+        stazione_a: modelloGiornaliero[i].stazione as NomiStazioni,
+        stazione_b: modelloGiornaliero[i+1].stazione as NomiStazioni,
+        inizio_occupazione: modelloGiornaliero[i].partenza,
+        fine_occupazione: modelloGiornaliero[i+1].arrivo,
+      });
+    }
+
+  }
+  return subtratte
 }

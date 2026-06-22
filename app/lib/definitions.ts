@@ -5,7 +5,7 @@ export type Convoglio = {
 
 //2
 export type Treno = {
-  codice: number;
+  codice: DaUnoAVenti;
   data: Date;
   convoglio: number;
   subtratta: number | null;
@@ -103,10 +103,11 @@ export type Richiesta = {
 
 //16
 export type Subtratta = {
-  stazione_a: "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
-  stazione_b: "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
-  inizio_occupazione: string;
-  fine_occupazione: string;
-  id: number;
+  stazione_a: NomiStazioni;
+  stazione_b: NomiStazioni;
+  inizio_occupazione: string | null;
+  fine_occupazione: string | null;
+  id?: number;
 }
 export type DaUnoAVenti = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
+export type NomiStazioni = "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
