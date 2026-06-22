@@ -171,10 +171,12 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS subtratta (
-        id              SMALLSERIAL,
+        id              BIGSERIAL,
         stazione_a      VARCHAR(255) NOT NULL,
         stazione_b      VARCHAR(255) NOT NULL,
-        stato           VARCHAR(255) NOT NULL,
+        inizio_occupazione TIME NOT NULL, 
+        fine_occupazione TIME NOT NULL, 
+
         PRIMARY KEY (id),
         FOREIGN KEY (stazione_a) REFERENCES stazione(nome),
         FOREIGN KEY (stazione_b) REFERENCES stazione(nome)

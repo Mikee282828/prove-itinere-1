@@ -76,15 +76,15 @@ export const treni: Treno[] = [
 //3
 export const stazioni: Stazione[] = [
   { nome: "Torre Spaventa", km: 0.0 },
-  { nome: "Prato Terra", km: 2.7 },
-  { nome: "Rocca Pietrosa", km: 7.58 },
-  { nome: "Villa Pietrosa", km: 12.68 },
-  { nome: "Villa Santa Maria", km: 16.9 },
-  { nome: "Pietra Santa Maria", km: 23.95 },
-  { nome: "Castro Marino", km: 31.5 },
-  { nome: "Porto Spigola", km: 39.5 },
-  { nome: "Porto San Felice", km: 46.0 },
-  { nome: "Villa San Felice", km: 54.68 },
+  { nome: "Prato Terra", km: 2.7 },             // 3:13 (dalla stazione prima in minuti)
+  { nome: "Rocca Pietrosa", km: 7.58 },         // 5:51 (dalla stazione prima in minuti)
+  { nome: "Villa Pietrosa", km: 12.68 },        // 6:07 .
+  { nome: "Villa Santa Maria", km: 16.9 },      // 8:27 .
+  { nome: "Pietra Santa Maria", km: 23.95 },    // 8:27 .
+  { nome: "Castro Marino", km: 31.5 },          // 9:03
+  { nome: "Porto Spigola", km: 39.5 },          // 9:36
+  { nome: "Porto San Felice", km: 46.0 },       // 7:48
+  { nome: "Villa San Felice", km: 54.68 },      // 10:24
 ];
 //4
 export const biglietti: Biglietto[] = [
