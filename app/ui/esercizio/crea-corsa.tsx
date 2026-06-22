@@ -37,6 +37,7 @@ export default function Form({
                   name="data"
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  required                
                 />
               </div>
               <div>
@@ -135,6 +136,7 @@ export default function Form({
                       name={`partenza${index + 1}`}
                       type="time"
                       className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                      required
                     />
                     <div>
                         {state.errors?.[`partenza${index+1}`] &&
@@ -164,6 +166,7 @@ export default function Form({
                         name={`ritorno${index + 1}`}
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                        required
                       />
                       <div>
                         {state.errors?.[`ritorno${index+1}`] &&
