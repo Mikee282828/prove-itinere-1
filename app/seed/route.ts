@@ -188,7 +188,7 @@ export async function GET() {
     convogli.forEach((c) => {
       transactionQueries.push(sql`INSERT INTO convoglio (id) VALUES (${c.id}) ON CONFLICT (id) DO NOTHING;`);
     });
-
+    transactionQueries.push(sql`SELECT setval(pg_get_serial_sequence('convoglio', 'id'), COALESCE(MAX(id), 1)) FROM convoglio;`);
     treni.forEach((t) => {
       transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data, subtratta) VALUES (${t.codice}, ${t.convoglio}, ${t.data}, ${t.subtratta}) ON CONFLICT (codice,data) DO NOTHING;`);
     });
@@ -240,7 +240,7 @@ export async function GET() {
     });
 
     subtratte.forEach((sb) => {
-      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, stato) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.stato}) ON CONFLICT (id) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.inizio_occupazione}, ${sb.fine_occupazione}) ON CONFLICT (id) DO NOTHING;`);
     });
 
     await sql.transaction(transactionQueries);
