@@ -30,7 +30,6 @@ export async function GET() {
         data      DATE    NOT NULL,
         codice    INT     NOT NULL,
         convoglio BIGINT  NOT NULL,
-        subtratta INT,
         PRIMARY KEY (codice, data),
         FOREIGN KEY (convoglio) REFERENCES convoglio(id)
       );
@@ -176,10 +175,11 @@ export async function GET() {
         stazione_b      VARCHAR(255) NOT NULL,
         inizio_occupazione TIME NOT NULL, 
         fine_occupazione TIME NOT NULL, 
-
-        PRIMARY KEY (id),
+        codice_treno    INT,
+        data_treno      DATE,
         FOREIGN KEY (stazione_a) REFERENCES stazione(nome),
-        FOREIGN KEY (stazione_b) REFERENCES stazione(nome)
+        FOREIGN KEY (stazione_b) REFERENCES stazione(nome),
+        FOREIGN KEY (codice_treno, data_treno) REFERENCES treno(codice, data)
       );
     `);
 
@@ -190,7 +190,7 @@ export async function GET() {
     });
     transactionQueries.push(sql`SELECT setval(pg_get_serial_sequence('convoglio', 'id'), COALESCE(MAX(id), 1)) FROM convoglio;`);
     treni.forEach((t) => {
-      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data, subtratta) VALUES (${t.codice}, ${t.convoglio}, ${t.data}, ${t.subtratta}) ON CONFLICT (codice,data) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data) VALUES (${t.codice}, ${t.convoglio}, ${t.data}) ON CONFLICT (codice,data) DO NOTHING;`);
     });
 
     stazioni.forEach((s) => {
@@ -240,7 +240,7 @@ export async function GET() {
     });
 
     subtratte.forEach((sb) => {
-      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.inizio_occupazione}, ${sb.fine_occupazione}) ON CONFLICT (id) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, data_treno, codice_treno) VALUES (${sb.stazione_a}, ${sb.stazione_b}, ${sb.inizio_occupazione}, ${sb.fine_occupazione}, ${sb.data_treno}, ${sb.codice_treno});`);
     });
 
     await sql.transaction(transactionQueries);

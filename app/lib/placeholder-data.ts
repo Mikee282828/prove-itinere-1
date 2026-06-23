@@ -39,37 +39,31 @@ export const treni: Treno[] = [
     codice: 1,
     convoglio: 1,
     data: new Date(),
-    subtratta: null
   },
   {
     codice: 1,
     convoglio: 1,
     data: new Date("2025-12-1"),
-    subtratta: null
   },
   {
     codice: 2,
     convoglio: 2,
     data: new Date(),
-    subtratta: null
   },
   {
     codice: 3,
     convoglio: 3,
     data: new Date(),
-    subtratta: null
   },
   {
     codice: 4,
     convoglio: 4,
     data: new Date(),
-    subtratta: null
   },
   {
     codice: 5,
     convoglio: 5,
     data: new Date(),
-    subtratta: null
   },
   ...generaTreno(new Date("2070-01-01"),new Date("2070-01-31"))
 ];

@@ -72,7 +72,6 @@ export function generaTreno(dataInizio: Date, dataFine: Date): Treno[] {
       codice: 1,
       data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
       convoglio: 1,
-      subtratta: null
     });
   }
   return treni
@@ -94,6 +93,8 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
         stazione_b: modelloGiornaliero[i+1].stazione as NomiStazioni,
         inizio_occupazione: modelloGiornaliero[i].partenza,
         fine_occupazione: modelloGiornaliero[i+1].arrivo,
+        codice_treno: 1,
+        data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
       });
     }
 

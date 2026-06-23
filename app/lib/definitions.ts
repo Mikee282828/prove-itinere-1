@@ -8,7 +8,6 @@ export type Treno = {
   codice: DaUnoAVenti;
   data: Date;
   convoglio: number;
-  subtratta: number | null;
 };
 
 //3
@@ -107,7 +106,8 @@ export type Subtratta = {
   stazione_b: NomiStazioni;
   inizio_occupazione: string | null;
   fine_occupazione: string | null;
-  id?: number;
+  codice_treno: number;
+  data_treno: Date;
 }
 export type DaUnoAVenti = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20;
 export type NomiStazioni = "Torre Spaventa"|"Prato Terra"|"Rocca Pietrosa"|"Villa Pietrosa"|"Villa Santa Maria"|"Pietra Santa Maria"|"Castro Marino"|"Porto Spigola"|"Porto San Felice"|"Villa San Felice";
