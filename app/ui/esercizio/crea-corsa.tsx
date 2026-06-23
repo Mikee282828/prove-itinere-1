@@ -21,6 +21,11 @@ export default function Form({
   ) as DaUnoAVenti[];
   return (
     <form className="flex-1 p-8" action={formAction}>
+      {state.message && (
+        <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
+          <p className="text-sm font-medium text-red-800">{state.message}</p>
+        </div>
+      )}
       <div className="space-y-12">
         <div className="border-b border-gray-900/10 pb-12">
           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
@@ -37,7 +42,8 @@ export default function Form({
                   name="data"
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  required                
+                  required
+                  defaultValue={"2070-02-01"}
                 />
               </div>
               <div>
@@ -124,7 +130,7 @@ export default function Form({
               >
                 <div className="sm:col-span-3">
                   <label
-                    htmlFor={`partenza${index + 1}`}
+                    htmlFor={`andata${index + 1}`}
                     className="block text-sm/6 font-medium text-gray-900"
                   >
                     Partenza da: <strong>{stazione.nome}</strong>{" "}
@@ -132,23 +138,26 @@ export default function Form({
                   </label>
                   <div className="grid grid-cols-1">
                     <input
-                      id={`partenza${index + 1}`}
-                      name={`partenza${index + 1}`}
+                      id={`andata${index + 1}`}
+                      name={`andata${index + 1}`}
                       type="time"
                       className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                       required
+                      defaultValue="10:00"
                     />
                     <div>
-                        {state.errors?.[`partenza${index+1}`] &&
-                          state.errors?.[`partenza${index+1}`]?.map((error: string) => (
+                      {state.errors?.[`andata${index + 1}`] &&
+                        state.errors?.[`andata${index + 1}`]?.map(
+                          (error: string) => (
                             <p
                               className="mt-2 text-sm text-red-500"
                               key={error}
                             >
                               {error}
                             </p>
-                          ))}
-                      </div>
+                          ),
+                        )}
+                    </div>
                   </div>
                 </div>
                 {stazione.nome !== "Villa San Felice" && (
@@ -167,17 +176,20 @@ export default function Form({
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                         required
+                        defaultValue="10:00"
                       />
                       <div>
-                        {state.errors?.[`ritorno${index+1}`] &&
-                          state.errors?.[`ritorno${index+1}`]?.map((error: string) => (
-                            <p
-                              className="mt-2 text-sm text-red-500"
-                              key={error}
-                            >
-                              {error}
-                            </p>
-                          ))}
+                        {state.errors?.[`ritorno${index + 1}`] &&
+                          state.errors?.[`ritorno${index + 1}`]?.map(
+                            (error: string) => (
+                              <p
+                                className="mt-2 text-sm text-red-500"
+                                key={error}
+                              >
+                                {error}
+                              </p>
+                            ),
+                          )}
                       </div>
                     </div>
                   </div>
@@ -199,6 +211,11 @@ export default function Form({
           Crea
         </Button>
       </div>
+      {state.message && (
+        <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
+          <p className="text-sm font-medium text-red-800">{state.message}</p>
+        </div>
+      )}
     </form>
   );
 }
