@@ -4,6 +4,8 @@ import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import z from "zod";
+import { fetchStazioni } from "./data";
+import { sommaMinuti } from "./utils";
 
 const sql = neon(process.env.DATABASE_URL || "");
 
@@ -61,17 +63,15 @@ const corsaSchema = z.object({
     data: z.coerce.date("Inserire la data!"),
     codiceTreno: z.coerce.number("Inserire un numero compreso tra 1 e 20").int().max(20).min(1),
     convoglio: z.coerce.number("Inserire un numero convoglio valido!").int().min(1),
-    partenza1: z.iso.time("Formattazione orario non valida!"),
-    partenza2: z.iso.time("Formattazione orario non valida!"),
-    partenza3: z.iso.time("Formattazione orario non valida!"),
-    partenza4: z.iso.time("Formattazione orario non valida!"),
-    partenza5: z.iso.time("Formattazione orario non valida!"),
-    partenza6: z.iso.time("Formattazione orario non valida!"),
-    partenza7: z.iso.time("Formattazione orario non valida!"),
-    partenza8: z.iso.time("Formattazione orario non valida!"),
-    partenza9: z.iso.time("Formattazione orario non valida!"),
-    partenza10: z.iso.time("Formattazione orario non valida!"),
-    ritorno1: z.iso.time("Formattazione orario non valida!"),
+    andata1: z.iso.time("Formattazione orario non valida!"),
+    andata2: z.iso.time("Formattazione orario non valida!"),
+    andata3: z.iso.time("Formattazione orario non valida!"),
+    andata4: z.iso.time("Formattazione orario non valida!"),
+    andata5: z.iso.time("Formattazione orario non valida!"),
+    andata6: z.iso.time("Formattazione orario non valida!"),
+    andata7: z.iso.time("Formattazione orario non valida!"),
+    andata8: z.iso.time("Formattazione orario non valida!"),
+    andata9: z.iso.time("Formattazione orario non valida!"),
     ritorno2: z.iso.time("Formattazione orario non valida!"),
     ritorno3: z.iso.time("Formattazione orario non valida!"),
     ritorno4: z.iso.time("Formattazione orario non valida!"),
@@ -80,6 +80,7 @@ const corsaSchema = z.object({
     ritorno7: z.iso.time("Formattazione orario non valida!"),
     ritorno8: z.iso.time("Formattazione orario non valida!"),
     ritorno9: z.iso.time("Formattazione orario non valida!"),
+    ritorno10: z.iso.time("Formattazione orario non valida!"),
 });
 
 export type StateCorsa = {
@@ -99,17 +100,15 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         data: formData.get("data"),
         codiceTreno: formData.get("codiceTreno"),
         convoglio: formData.get("convoglio"),
-        partenza1: formData.get("partenza1"),
-        partenza2: formData.get("partenza2"),
-        partenza3: formData.get("partenza3"),
-        partenza4: formData.get("partenza4"),
-        partenza5: formData.get("partenza5"),
-        partenza6: formData.get("partenza6"),
-        partenza7: formData.get("partenza7"),
-        partenza8: formData.get("partenza8"),
-        partenza9: formData.get("partenza9"),
-        partenza10: formData.get("partenza10"),
-        ritorno1: formData.get("ritorno1"),
+        andata1: formData.get("andata1"),
+        andata2: formData.get("andata2"),
+        andata3: formData.get("andata3"),
+        andata4: formData.get("andata4"),
+        andata5: formData.get("andata5"),
+        andata6: formData.get("andata6"),
+        andata7: formData.get("andata7"),
+        andata8: formData.get("andata8"),
+        andata9: formData.get("andata9"),
         ritorno2: formData.get("ritorno2"),
         ritorno3: formData.get("ritorno3"),
         ritorno4: formData.get("ritorno4"),
@@ -118,6 +117,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         ritorno7: formData.get("ritorno7"),
         ritorno8: formData.get("ritorno8"),
         ritorno9: formData.get("ritorno9"),
+        ritorno10: formData.get("ritorno10"),
     });
 
     if (!validatedFields.success) {
@@ -127,11 +127,41 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         }
     }
 
-    const data = validatedFields.data;
+    const dati = validatedFields.data;
 
     try {
+        const trenoPresente = await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
+        if (trenoPresente.length !== 0) return {
+            message: "Errore. Impossibile creare due treni con lo stesso codice nello stesso giorno",
+        };
+
+        // prendi tutte le stazioni
+        const stazioni = await fetchStazioni();
+        // stazioni.forEach((stazione, index) => { console.log(index, stazione) });
+
+        // ciclare sui viaggi 
+        // (OrarioArrivo>inizio_occupazione AND OrarioPartenza<fine_occupazione)
+        let conflittoSubtratte;
+        for (let i = 1; i < 10; i++) {
+            console.log(sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string,(Math.abs(stazioni[i].km-stazioni[i-1].km)*1.2).toFixed(2)))
+            conflittoSubtratte = await sql`
+                SELECT * from subtratta as sb
+                WHERE data_treno = '2070-01-01'
+                AND stazione_a = ${stazioni[i-1].nome}
+                AND stazione_b = ${stazioni[i].nome}
+                AND ${sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string,(Math.abs(stazioni[i].km-stazioni[i-1].km)*1.2).toFixed(2))}>inizio_occupazione 
+                AND ${dati[`andata${i}` as keyof typeof dati]}<fine_occupazione
+            `;
+            if (conflittoSubtratte.length > 0) {
+                return (
+                    {
+                        message: `L'orario della subtratta: ${stazioni[i-1].nome}-${stazioni[i].nome}
+                        è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+                    }
+                )
+            }
+        }
     } catch (error) {
-        console.log(error);
         return {
             message: "Errore. Impossibile creare la corsa",
             error: error,

@@ -43,7 +43,7 @@ export default function Form({
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                   required
-                  defaultValue={"2070-02-01"}
+                  defaultValue={"2070-01-01"}
                 />
               </div>
               <div>
@@ -128,46 +128,49 @@ export default function Form({
                 key={`${stazione}${index}`}
                 className="col-span-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6"
               >
-                <div className="sm:col-span-3">
-                  <label
-                    htmlFor={`andata${index + 1}`}
-                    className="block text-sm/6 font-medium text-gray-900"
-                  >
-                    Partenza da: <strong>{stazione.nome}</strong>{" "}
-                    {parseFloat(String(stazione.km)).toFixed(2)} Km andata
-                  </label>
-                  <div className="grid grid-cols-1">
-                    <input
-                      id={`andata${index + 1}`}
-                      name={`andata${index + 1}`}
-                      type="time"
-                      className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                      required
-                      defaultValue="10:00"
-                    />
-                    <div>
-                      {state.errors?.[`andata${index + 1}`] &&
-                        state.errors?.[`andata${index + 1}`]?.map(
-                          (error: string) => (
-                            <p
-                              className="mt-2 text-sm text-red-500"
-                              key={error}
-                            >
-                              {error}
-                            </p>
-                          ),
-                        )}
+                {stazione.nome !== "Villa San Felice" ? (
+                  <div className="sm:col-span-3">
+                    <label
+                      htmlFor={`andata${index + 1}`}
+                      className="block text-sm/6 font-medium text-gray-900"
+                    >
+                      Partenza da: <strong>{stazione.nome}</strong>{" "}
+                      {parseFloat(String(stazione.km)).toFixed(2)} Km
+                    </label>
+                    <div className="grid grid-cols-1">
+                      <input
+                        id={`andata${index + 1}`}
+                        name={`andata${index + 1}`}
+                        type="time"
+                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                        required
+                        defaultValue="10:43"
+                      />
+                      <div>
+                        {state.errors?.[`andata${index + 1}`] &&
+                          state.errors?.[`andata${index + 1}`]?.map(
+                            (error: string) => (
+                              <p
+                                className="mt-2 text-sm text-red-500"
+                                key={error}
+                              >
+                                {error}
+                              </p>
+                            ),
+                          )}
+                      </div>
                     </div>
                   </div>
-                </div>
-                {stazione.nome !== "Villa San Felice" && (
+                ) : <div className="sm:col-span-3"></div> }
+
+                {stazione.nome !== "Torre Spaventa" && (
                   <div className="sm:col-span-3">
                     <label
                       htmlFor={`ritorno${index + 1}`}
                       className="block text-sm/6 font-medium text-gray-900"
                     >
-                      Partenza da: <strong>{stazione.nome}</strong>{" "}
-                      {parseFloat(String(stazione.km)).toFixed(2)} Km ritorno
+                      Ritorno da: <strong>{stazione.nome}</strong>{" "}
+                      {parseFloat(String(stazione.km)).toFixed(2)} Km
                     </label>
                     <div className="grid grid-cols-1">
                       <input

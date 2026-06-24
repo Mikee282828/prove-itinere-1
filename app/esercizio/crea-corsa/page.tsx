@@ -1,4 +1,4 @@
-import { ConvoglioRaggruppato, fetchComposizioni, fetchStazioni, provaFetch } from "@/app/lib/data";
+import { ConvoglioRaggruppato, fetchComposizioni, fetchStazioni } from "@/app/lib/data";
 import { Stazione } from "@/app/lib/definitions";
 import Form from "@/app/ui/esercizio/crea-corsa";
 
