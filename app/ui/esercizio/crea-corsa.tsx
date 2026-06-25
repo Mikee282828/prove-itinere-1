@@ -72,11 +72,7 @@ export default function Form({
                   defaultValue={state.enteredFormData?.codiceTreno || "1"}
                 >
                   {codiciTreni.map((codici) => {
-                    return (
-                      <option key={codici}>
-                        {codici}
-                      </option>
-                    );
+                    return <option key={codici}>{codici}</option>;
                   })}
                 </select>
                 <ChevronDownIcon
@@ -152,7 +148,11 @@ export default function Form({
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                         required
-                        defaultValue={state.enteredFormData?.[`andata${index + 1}` as keyof typeof state.enteredFormData] || "10:00"}
+                        defaultValue={
+                          state.enteredFormData?.[
+                            `andata${index + 1}` as keyof typeof state.enteredFormData
+                          ] || "10:00"
+                        }
                       />
                       <div>
                         {state.errors?.[`andata${index + 1}`] &&
@@ -189,7 +189,11 @@ export default function Form({
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                         required
-                        defaultValue={state.enteredFormData?.[`ritorno${index + 1}` as keyof typeof state.enteredFormData] || "10:00"}
+                        defaultValue={
+                          state.enteredFormData?.[
+                            `ritorno${index + 1}` as keyof typeof state.enteredFormData
+                          ] || "10:00"
+                        }
                       />
                       <div>
                         {state.errors?.[`ritorno${index + 1}`] &&
