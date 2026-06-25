@@ -152,12 +152,12 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
             orarioArrivo = sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
             orarioPartenza = dati[`andata${i}` as keyof typeof dati];
-            orarioPartenzaSucc = i<9 ? dati[`andata${i+1}` as keyof typeof dati] : dati.ritorno10;
+            orarioPartenzaSucc = i < 9 ? dati[`andata${i + 1}` as keyof typeof dati] : dati.ritorno10;
             // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
-            if(orarioPartenzaSucc < orarioArrivo){
+            if (orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome}`
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`
                     }
                 )
             }
@@ -185,12 +185,12 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
             orarioArrivo = sommaMinuti(dati[`ritorno${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
             orarioPartenza = dati[`ritorno${i}` as keyof typeof dati];
-            orarioPartenzaSucc = i>2 ? dati[`ritorno${i-1}` as keyof typeof dati] : orarioArrivo;
+            orarioPartenzaSucc = i > 2 ? dati[`ritorno${i - 1}` as keyof typeof dati] : orarioArrivo;
             // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
-            if(orarioPartenzaSucc < orarioArrivo){
+            if (orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i-1].nome}`
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`
                     }
                 )
             }
