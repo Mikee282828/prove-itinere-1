@@ -95,7 +95,7 @@ export type StateCorsa = {
 
 export async function createCorsa(prevState: StateCorsa, formData: FormData) {
 
-    // prende campo name e non id!
+    // prende campo name e non id! (gli input html)
     const validatedFields = corsaSchema.safeParse({
         data: formData.get("data"),
         codiceTreno: formData.get("codiceTreno"),
@@ -120,6 +120,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         ritorno10: formData.get("ritorno10"),
     });
 
+    //uscita anticipata in caso di errori di validazione
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
@@ -130,6 +131,8 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
     const dati = validatedFields.data;
 
     try {
+        // controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
+        // se sì allora uscita anticipata
         const trenoPresente = await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
         if (trenoPresente.length !== 0) return {
             message: "Errore. Impossibile creare due treni con lo stesso codice nello stesso giorno",
@@ -137,25 +140,74 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
 
         // prendi tutte le stazioni
         const stazioni = await fetchStazioni();
-        // stazioni.forEach((stazione, index) => { console.log(index, stazione) });
 
-        // ciclare sui viaggi 
+        // ciclare sulle subtratte di andata 
         // (OrarioArrivo>inizio_occupazione AND OrarioPartenza<fine_occupazione)
         let conflittoSubtratte;
+        let orarioArrivo;
+        let orarioPartenza;
+        let orarioPartenzaSucc;
+        // ANDATA
         for (let i = 1; i < 10; i++) {
-            console.log(sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string,(Math.abs(stazioni[i].km-stazioni[i-1].km)*1.2).toFixed(2)))
+            // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
+            orarioArrivo = sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
+            orarioPartenza = dati[`andata${i}` as keyof typeof dati];
+            orarioPartenzaSucc = i<9 ? dati[`andata${i+1}` as keyof typeof dati] : dati.ritorno10;
+            // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
+            if(orarioPartenzaSucc < orarioArrivo){
+                return (
+                    {
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome}`
+                    }
+                )
+            }
+            // cerca subtratte sovrapposte agli orari che si vogliono creare
             conflittoSubtratte = await sql`
                 SELECT * from subtratta as sb
-                WHERE data_treno = '2070-01-01'
-                AND stazione_a = ${stazioni[i-1].nome}
+                WHERE data_treno = ${dati.data}
+                AND stazione_a = ${stazioni[i - 1].nome}
                 AND stazione_b = ${stazioni[i].nome}
-                AND ${sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string,(Math.abs(stazioni[i].km-stazioni[i-1].km)*1.2).toFixed(2))}>inizio_occupazione 
-                AND ${dati[`andata${i}` as keyof typeof dati]}<fine_occupazione
+                AND ${orarioArrivo}>inizio_occupazione 
+                AND ${orarioPartenza}<fine_occupazione
             `;
+            // se ci sono subtratte sovrapposte allora uscita anticipata
             if (conflittoSubtratte.length > 0) {
                 return (
                     {
-                        message: `L'orario della subtratta: ${stazioni[i-1].nome}-${stazioni[i].nome}
+                        message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
+                        è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+                    }
+                )
+            }
+        }
+        // RITORNO
+        for (let i = 10; i > 1; i--) {
+            // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
+            orarioArrivo = sommaMinuti(dati[`ritorno${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
+            orarioPartenza = dati[`ritorno${i}` as keyof typeof dati];
+            orarioPartenzaSucc = i>2 ? dati[`ritorno${i-1}` as keyof typeof dati] : orarioArrivo;
+            // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
+            if(orarioPartenzaSucc < orarioArrivo){
+                return (
+                    {
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i-1].nome}`
+                    }
+                )
+            }
+            // cerca subtratte sovrapposte agli orari che si vogliono creare
+            conflittoSubtratte = await sql`
+                SELECT * from subtratta as sb
+                WHERE data_treno = ${dati.data}
+                AND stazione_a = ${stazioni[i - 1].nome}
+                AND stazione_b = ${stazioni[i].nome}
+                AND ${orarioArrivo}>inizio_occupazione 
+                AND ${orarioPartenza}<fine_occupazione
+            `;
+            // se ci sono subtratte sovrapposte allora uscita anticipata
+            if (conflittoSubtratte.length > 0) {
+                return (
+                    {
+                        message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
                         è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
                     }
                 )
