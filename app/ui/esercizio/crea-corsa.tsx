@@ -43,7 +43,7 @@ export default function Form({
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                   required
-                  defaultValue={"2070-01-01"}
+                  defaultValue={state.enteredFormData?.data || "2070-01-01"}
                 />
               </div>
               <div>
@@ -67,11 +67,17 @@ export default function Form({
                 <select
                   id="codiceTreno"
                   name="codiceTreno"
+                  key={state.enteredFormData?.codiceTreno}
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  defaultValue={state.enteredFormData?.codiceTreno || "1"}
                 >
-                  {codiciTreni.map((codici) => (
-                    <option key={codici}>{codici}</option>
-                  ))}
+                  {codiciTreni.map((codici) => {
+                    return (
+                      <option key={codici}>
+                        {codici}
+                      </option>
+                    );
+                  })}
                 </select>
                 <ChevronDownIcon
                   aria-hidden="true"
@@ -99,6 +105,8 @@ export default function Form({
                   id="convoglio"
                   name="convoglio"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  defaultValue={state.enteredFormData?.convoglio}
+                  key={state.enteredFormData?.convoglio || "default"}
                 >
                   {convogli.map((convoglio) => (
                     <option key={convoglio.convoglio}>
@@ -144,7 +152,7 @@ export default function Form({
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                         required
-                        defaultValue="10:43"
+                        defaultValue={state.enteredFormData?.[`andata${index + 1}` as keyof typeof state.enteredFormData] || "10:00"}
                       />
                       <div>
                         {state.errors?.[`andata${index + 1}`] &&
@@ -161,7 +169,9 @@ export default function Form({
                       </div>
                     </div>
                   </div>
-                ) : <div className="sm:col-span-3"></div> }
+                ) : (
+                  <div className="sm:col-span-3"></div>
+                )}
 
                 {stazione.nome !== "Torre Spaventa" && (
                   <div className="sm:col-span-3">
@@ -179,7 +189,7 @@ export default function Form({
                         type="time"
                         className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                         required
-                        defaultValue="10:00"
+                        defaultValue={state.enteredFormData?.[`ritorno${index + 1}` as keyof typeof state.enteredFormData] || "10:00"}
                       />
                       <div>
                         {state.errors?.[`ritorno${index + 1}`] &&

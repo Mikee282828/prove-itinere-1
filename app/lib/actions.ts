@@ -91,6 +91,12 @@ export type StateCorsa = {
         [key: string]: string[] | undefined;
     };
     message?: string | null;
+    enteredFormData?: {
+        data?: string,
+        codiceTreno?: string,
+        convoglio?: string,
+        [key: string]: string | undefined
+    };
 };
 
 export async function createCorsa(prevState: StateCorsa, formData: FormData) {
@@ -120,11 +126,36 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         ritorno10: formData.get("ritorno10"),
     });
 
+    const rawData = {
+        data: formData.get("data") as string,
+        codiceTreno: formData.get("codiceTreno") as string,
+        convoglio: formData.get("convoglio") as string,
+        andata1: formData.get("andata1") as string,
+        andata2: formData.get("andata2") as string,
+        andata3: formData.get("andata3") as string,
+        andata4: formData.get("andata4") as string,
+        andata5: formData.get("andata5") as string,
+        andata6: formData.get("andata6") as string,
+        andata7: formData.get("andata7") as string,
+        andata8: formData.get("andata8") as string,
+        andata9: formData.get("andata9") as string,
+        ritorno2: formData.get("ritorno2") as string,
+        ritorno3: formData.get("ritorno3") as string,
+        ritorno4: formData.get("ritorno4") as string,
+        ritorno5: formData.get("ritorno5") as string,
+        ritorno6: formData.get("ritorno6") as string,
+        ritorno7: formData.get("ritorno7") as string,
+        ritorno8: formData.get("ritorno8") as string,
+        ritorno9: formData.get("ritorno9") as string,
+        ritorno10: formData.get("ritorno10") as string,
+    }
+
     //uscita anticipata in caso di errori di validazione
     if (!validatedFields.success) {
         return {
             errors: validatedFields.error.flatten().fieldErrors,
-            message: "Campi mancanti. Creazione corsa fallita."
+            message: "Campi mancanti. Creazione corsa fallita.",
+            entereFormData: rawData
         }
     }
 
@@ -136,6 +167,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         const trenoPresente = await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
         if (trenoPresente.length !== 0) return {
             message: "Errore. Impossibile creare due treni con lo stesso codice nello stesso giorno",
+            enteredFormData: rawData,
         };
 
         // prendi tutte le stazioni
@@ -157,7 +189,9 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             if (orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`,
+                        enteredFormData: rawData,
+
                     }
                 )
             }
@@ -176,6 +210,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                     {
                         message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
                         è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+                        enteredFormData: rawData,
                     }
                 )
             }
@@ -190,7 +225,9 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             if (orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`
+                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`,
+                        enteredFormData: rawData,
+
                     }
                 )
             }
@@ -209,6 +246,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                     {
                         message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
                         è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+                        enteredFormData: rawData,
                     }
                 )
             }
@@ -217,6 +255,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         return {
             message: "Errore. Impossibile creare la corsa",
             error: error,
+            enteredFormData: rawData,
         };
     }
     revalidatePath("/esercizio"); // clear cached path
