@@ -179,19 +179,23 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         let orarioArrivo;
         let orarioPartenza;
         let orarioPartenzaSucc;
+        let minPercorrenzaSubtratta;
         // ANDATA
         for (let i = 1; i < 10; i++) {
-            // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
-            orarioArrivo = sommaMinuti(dati[`andata${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
+            // minuti di percorrenza della subtratta corrente
+            minPercorrenzaSubtratta = (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2);
+            //partenza dalla stazione corrente
             orarioPartenza = dati[`andata${i}` as keyof typeof dati];
+            //arrivo alla stazione successiva
+            orarioArrivo = sommaMinuti(orarioPartenza as string, minPercorrenzaSubtratta);
+            //partenza dalla stazione successiva
             orarioPartenzaSucc = i < 9 ? dati[`andata${i + 1}` as keyof typeof dati] : dati.ritorno10;
             // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
             if (orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`,
+                        message: `Per la subtratta: ${stazioni[i - 1].nome} - ${stazioni[i].nome}, l'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo}`,
                         enteredFormData: rawData,
-
                     }
                 )
             }
@@ -217,15 +221,19 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         }
         // RITORNO
         for (let i = 10; i > 1; i--) {
-            // assegnazione orari di arrivo alla stazione successiva, partenza dalla stazione corrente e successiva
-            orarioArrivo = sommaMinuti(dati[`ritorno${i}` as keyof typeof dati] as string, (Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2).toFixed(2));
+            // minuti di percorrenza della subtratta corrente
+            minPercorrenzaSubtratta = (Math.abs(stazioni[i - 1].km - stazioni[i - 2].km) * 1.2).toFixed(2);
+            //partenza dalla stazione corrente
             orarioPartenza = dati[`ritorno${i}` as keyof typeof dati];
-            orarioPartenzaSucc = i > 2 ? dati[`ritorno${i - 1}` as keyof typeof dati] : orarioArrivo;
+            //arrivo alla stazione successiva
+            orarioArrivo = sommaMinuti(dati[`ritorno${i}` as keyof typeof dati] as string, minPercorrenzaSubtratta);
+            //partenza dalla stazione successiva
+            orarioPartenzaSucc = i > 2 && dati[`ritorno${i - 1}` as keyof typeof dati];
             // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
-            if (orarioPartenzaSucc < orarioArrivo) {
+            if (orarioPartenzaSucc && orarioPartenzaSucc < orarioArrivo) {
                 return (
                     {
-                        message: `L'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo} alla stazione ${stazioni[i].nome} da ${stazioni[i - 1].nome}`,
+                        message: `Per la subtratta: ${stazioni[i - 1].nome} - ${stazioni[i - 2].nome}, l'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i - 2].nome} è successiva all'orario minima di arrivo ${orarioArrivo}`,
                         enteredFormData: rawData,
 
                     }
@@ -236,7 +244,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                 SELECT * from subtratta as sb
                 WHERE data_treno = ${dati.data}
                 AND stazione_a = ${stazioni[i - 1].nome}
-                AND stazione_b = ${stazioni[i].nome}
+                AND stazione_b = ${stazioni[i - 2].nome}
                 AND ${orarioArrivo}>inizio_occupazione 
                 AND ${orarioPartenza}<fine_occupazione
             `;
@@ -244,7 +252,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             if (conflittoSubtratte.length > 0) {
                 return (
                     {
-                        message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
+                        message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i - 2].nome}"
                         è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
                         enteredFormData: rawData,
                     }
@@ -252,6 +260,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
             }
         }
     } catch (error) {
+        console.error(error);
         return {
             message: "Errore. Impossibile creare la corsa",
             error: error,

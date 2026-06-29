@@ -5,6 +5,7 @@ import { ConvoglioRaggruppato } from "@/app/lib/data";
 import { DaUnoAVenti, Stazione } from "@/app/lib/definitions";
 import { createCorsa, StateCorsa } from "@/app/lib/actions";
 import { useActionState } from "react";
+import { sommaMinuti } from "@/app/lib/utils";
 
 export default function Form({
   convogli,
@@ -151,7 +152,7 @@ export default function Form({
                         defaultValue={
                           state.enteredFormData?.[
                             `andata${index + 1}` as keyof typeof state.enteredFormData
-                          ] || "10:00"
+                          ] || sommaMinuti("06:00",index*30)
                         }
                       />
                       <div>
@@ -192,7 +193,7 @@ export default function Form({
                         defaultValue={
                           state.enteredFormData?.[
                             `ritorno${index + 1}` as keyof typeof state.enteredFormData
-                          ] || "10:00"
+                          ] || sommaMinuti("15:00",-index*30)
                         }
                       />
                       <div>
@@ -231,6 +232,7 @@ export default function Form({
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
+
         </div>
       )}
     </form>
