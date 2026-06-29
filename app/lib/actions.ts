@@ -180,6 +180,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
         let orarioPartenza;
         let orarioPartenzaSucc;
         let minPercorrenzaSubtratta;
+        const transactionQueries = [];
         // ANDATA
         for (let i = 1; i < 10; i++) {
             // minuti di percorrenza della subtratta corrente
@@ -218,7 +219,24 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                     }
                 )
             }
+            // query di inserimento
+            //treno
+            transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data) 
+                                        VALUES (${dati.codiceTreno}, ${dati.convoglio}, ${dati.data}) 
+                                        ON CONFLICT (codice,data) DO NOTHING;`);
+            //traccia
+            transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
+                                        VALUES (${i > 1 ? sommaMinuti(dati[`andata${i - 1}` as keyof typeof dati] as string, (Math.abs(stazioni[i - 1].km - stazioni[i - 2].km) * 1.2).toFixed(2)) : null},
+                                        ${orarioPartenza},
+                                        ${stazioni[i - 1].nome},
+                                        ${dati.codiceTreno},
+                                        ${dati.data},1) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+            // subtratta
+            transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
+                                        VALUES (${stazioni[i - 1].nome},${stazioni[i].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
+                `);
         }
+        await sql.transaction(transactionQueries);
         // RITORNO
         for (let i = 10; i > 1; i--) {
             // minuti di percorrenza della subtratta corrente
@@ -259,6 +277,8 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                 )
             }
         }
+
+        // inserimento 
     } catch (error) {
         console.error(error);
         return {
