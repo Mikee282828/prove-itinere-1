@@ -1,5 +1,5 @@
 "use client";
-import { MaterialeRotabile, Stazione, TracciaCorrente, Treno } from "@/app/lib/definitions";
+import { MaterialeRotabile, Stazione, TracciaCorrente} from "@/app/lib/definitions";
 import { Calendar, Settings, TrainIcon } from "lucide-react";
 import { useState } from "react";
 import SezioneMateriale from "./sezione-materiale";
