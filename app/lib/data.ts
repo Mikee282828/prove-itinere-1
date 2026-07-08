@@ -1,4 +1,4 @@
-import { MaterialeRotabile, Stazione, TracciaCorrente, Treno } from "./definitions";
+import { MaterialeRotabile, Stazione, TracciaCorrente } from "./definitions";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -75,7 +75,8 @@ export async function fetchTracceCorrenti(data: string): Promise<TracciaCorrente
   try {
     const tracce = await sql`
     SELECT * from traccia_corrente
-    WHERE data = ${data} AND data >= NOW()::DATE;
+    WHERE data = ${data} AND data >= NOW()::DATE
+    ORDER BY treno ASC;
     `
     console.log(tracce);
     return tracce as TracciaCorrente[]

@@ -1,15 +1,33 @@
-import { TracciaCorrente } from "@/app/lib/definitions";
+import { Stazione, TracciaCorrente } from "@/app/lib/definitions";
 import Search from "./cerca/searchTreno";
 import Link from "next/link";
+import React from "react";
 
 export default function SezioneOrari({
   active,
   tracce,
+  stazioni,
 }: {
   active: boolean;
   tracce: TracciaCorrente[] | null;
+  stazioni: Stazione[] | null;
 }) {
   if (active) {
+    let tracceSmistate;
+    let tracceAndata;
+    let tracceRitorno;
+
+    if (tracce && tracce.length > 0) {
+      tracceSmistate = tracce && Object.groupBy(tracce, (traccia) => traccia.progressivo)
+      tracceAndata = tracceSmistate?.["1"]
+        ? Object.groupBy(tracceSmistate["1"], (traccia) => traccia.treno)
+        : undefined;
+      tracceRitorno = tracceSmistate?.["2"]
+        ? Object.groupBy(tracceSmistate["2"], (traccia) => traccia.treno)
+        : undefined;
+    }
+
+
     return (
       <div className="p-8">
         <Link
@@ -19,25 +37,107 @@ export default function SezioneOrari({
           2070-01-01
         </Link>
         <Search />
-        {tracce?.length == 0 ? (
-          <div className="text-red-500"> Nessun elemento trovato</div>
-        ) : (
-          tracce?.map((traccia, index) => (
-            <div key={index}>
-              <div>arrivo: {traccia.orario_arrivo?.slice(0, 5)}</div>
-              <div>partenza : {traccia.orario_partenza?.slice(0, 5)}</div>
-              <div>
-                Tipo : {traccia.progressivo == 1 ? "Andata" : "Ritorno"}
-              </div>
-              <div>stazione : {traccia.stazione}</div>
-              <div>data: {traccia.data.toLocaleDateString("it")}</div>
-              <div>treno : {traccia.treno}</div>
-              <div>
-                -------------------------------------------------------------------------------------------
-              </div>
-            </div>
-          ))
-        )}
+
+        {
+          tracce === null ? "" :
+            (tracce?.length === 0) ? (
+              <div className="text-red-500"> Nessun elemento trovato</div>
+            ) :
+              (<div className="flex justify-center gap-8">
+                {/* orari andata */}
+                <div className="flex border-x-2">
+                  {tracceAndata && Object.values(tracceAndata).map((tracceArray) => {
+                    return (
+                      <div key={tracceArray?.[0].treno + "andata"}>
+                        <strong className="border-b-2">Treno: {tracceArray?.[0].treno}</strong>
+                        {tracceArray?.map((element) => {
+                          return (
+                            <div key={element.orario_partenza?.slice(0, 5) + "andata"}>
+                              <div>
+                                {element.orario_arrivo?.slice(0, 5)}
+                              </div>
+                              <div>
+                                {element.orario_partenza?.slice(0, 5)}&#8203;
+                              </div>
+                            </div>)
+                        })}
+                      </div>)
+                  })}
+                </div>
+                {/* partenza/arrivo */}
+                <div className="border-x-2 text-center">
+                  <div>
+                    <strong>Andata</strong>
+                  </div>
+                  {stazioni?.map((el, index) => {
+                    return (
+                      <React.Fragment key={`andata_${el.nome}`}>
+                        <div>
+                          <strong>p</strong>
+                        </div>
+                        {index !== stazioni.length - 1 ? <div><strong>a</strong></div> : ""}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* nome stazione */}
+                <div>
+                  <div>
+                    <strong>Nome stazione</strong>
+                  </div>
+                  {stazioni?.map((stazione) => {
+                    return (
+                      <React.Fragment key={stazione.nome}>
+                        <div>
+                          {stazione.nome} {parseFloat(String(stazione.km)).toFixed(2)} km
+                        </div>
+                        <div>
+                          &#8203;
+                        </div>
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* partenza/arrivo */}
+                <div className="border-x-2 text-center">
+                  <div>
+                    <strong>Ritorno</strong>
+                  </div>
+                  {stazioni?.map((el, index) => {
+                    return (
+                      <React.Fragment key={`ritorno_${el.nome}`}>
+                        <div>
+                          <strong>a</strong>
+                        </div>
+                        {index !== stazioni.length - 1 ? <div><strong>p</strong></div> : ""}
+                      </React.Fragment>
+                    );
+                  })}
+                </div>
+
+                {/* orari ritorno */}
+                <div className="flex border-x-2">
+                  {tracceRitorno && Object.values(tracceRitorno).map((tracceArray) => {
+                    return (
+                      <div key={tracceArray?.[0].treno + "ritorno"}>
+                        <strong className="border-b-2">Treno: {tracceArray?.[0].treno}</strong>
+                        {[...(tracceArray ?? [])].reverse().map((element) => {
+                          return (
+                            <div key={element.orario_partenza?.slice(0, 5) + "ritorno"}>
+                              <div>
+                                {element.orario_arrivo?.slice(0, 5)}&#8203; {/* carattere vuoto */}
+                              </div>
+                              <div>
+                                {element.orario_partenza?.slice(0, 5)}
+                              </div>
+                            </div>)
+                        })}
+                      </div>)
+                  })}
+                </div>
+              </div>)}
       </div>
     );
   }

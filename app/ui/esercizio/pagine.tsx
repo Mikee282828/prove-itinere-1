@@ -1,5 +1,5 @@
 "use client";
-import { MaterialeRotabile, TracciaCorrente, Treno } from "@/app/lib/definitions";
+import { MaterialeRotabile, Stazione, TracciaCorrente, Treno } from "@/app/lib/definitions";
 import { Calendar, Settings, TrainIcon } from "lucide-react";
 import { useState } from "react";
 import SezioneMateriale from "./sezione-materiale";
@@ -12,10 +12,12 @@ export default function Pagine({
   materialeRotabile,
   composizioni,
   tracce,
+  stazioni
 }: {
   materialeRotabile: MaterialeRotabile[] | null,
   composizioni: ConvoglioRaggruppato[],
   tracce: TracciaCorrente[] | null,
+  stazioni: Stazione[] | null,
 }) {
   const [activeTab, setActiveTab] = useState<TabType>("composizioni");
   return (
@@ -64,7 +66,7 @@ export default function Pagine({
         </section>
         <SezioneMateriale active={activeTab==="materiale"} materialeRotabile={materialeRotabile}/>
         <SezioneConvoglio active={activeTab==="composizioni"} composizioni={composizioni} />
-        <SezioneOrari active={activeTab==="orari"} tracce={tracce}/>
+        <SezioneOrari active={activeTab==="orari"} tracce={tracce} stazioni={stazioni}/>
       </main>
     </div>
   );
