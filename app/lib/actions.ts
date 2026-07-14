@@ -177,17 +177,54 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
     if (trenoPresente.length !== 0)
       return {
         message:
-          "Errore. Impossibile creare due treni con lo stesso codice nello stesso giorno",
+          "Errore. Impossibile creare un treno con lo stesso codice di un altro treno nello stesso giorno",
         enteredFormData: rawData,
       };
+
+    // prendi tutte le stazioni
+    const stazioni = await fetchStazioni();
+    // console.log("sommaminuti",sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2)))
+    // console.log("andata1",dati.andata1);
+    // return {
+    //     message:
+    //       "uscita anticipata",
+    //     enteredFormData: rawData,
+    //   }
+
+    // uscita anticipata in caso di utilizzo di materiali rotabili sovrapposti
+    const materialePresente = await sql`
+      -- Materiali in viaggio 
+      SELECT mat.* 
+      FROM materiale_rotabile AS mat
+      INNER JOIN composizione AS comp ON comp.id_mat = mat.id
+      INNER JOIN convoglio ON comp.convoglio = convoglio.id
+      INNER JOIN treno ON convoglio.id = treno.convoglio
+      INNER JOIN traccia_corrente as traccia ON treno.data = traccia.data AND treno.codice = traccia.treno
+      WHERE traccia.data = ${dati.data}
+      GROUP BY mat.id
+      HAVING MAX(traccia.orario_arrivo)>${dati.andata1} AND MIN(traccia.orario_partenza)<${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))}
+      INTERSECT
+      -- Materiali appartenenti a un determinato convoglio
+      SELECT mat.* 
+      FROM materiale_rotabile AS mat
+      INNER JOIN composizione AS comp ON comp.id_mat = mat.id
+      INNER JOIN convoglio ON comp.convoglio = convoglio.id
+      WHERE convoglio.id = ${dati.convoglio};
+      `;
+    if (materialePresente.length !== 0) {
+      console.log(materialePresente);
+      return {
+        message:
+          "Errore. Impossibile creare un treno avente materiale rotabile contenuto in un altro treno in viaggio nell'intervallo specificato",
+        enteredFormData: rawData,
+      };
+    }
+    // init array di query
     const transactionQueries = [];
     //treno
     transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data) 
                                         VALUES (${dati.codiceTreno}, ${dati.convoglio}, ${dati.data}) 
                                         ON CONFLICT (codice,data) DO NOTHING;`);
-
-    // prendi tutte le stazioni
-    const stazioni = await fetchStazioni();
 
     // ciclare sulle subtratte di andata
     // (OrarioArrivo>inizio_occupazione AND OrarioPartenza<fine_occupazione)
