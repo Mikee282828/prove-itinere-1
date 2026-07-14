@@ -356,7 +356,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                                         ${orarioPartenza},
                                         ${stazioni[i - 1].nome},
                                         ${dati.codiceTreno},
-                                        ${dati.data},2) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+                                        ${dati.data},${i==10 ? 1 : 2}) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
       // subtratta
       transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
                                         VALUES (${stazioni[i - 1].nome},${stazioni[i - 2].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
