@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import z from "zod";
 import { fetchStazioni } from "./data";
 import { sommaMinuti } from "./utils";
+import { Treno } from "./definitions";
 
 const sql = neon(process.env.DATABASE_URL || "");
 
@@ -163,7 +164,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
       message: "Campi mancanti. Creazione corsa fallita.",
-      entereFormData: rawData,
+      enteredFormData: rawData,
     };
   }
 
@@ -361,6 +362,288 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
       transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
                                         VALUES (${stazioni[i - 1].nome},${stazioni[i - 2].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
                 `);
+    }
+
+    // inserimento traccia ritorno della prima stazione
+    transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
+                                VALUES (${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))},null,${stazioni[0].nome},${dati.codiceTreno},${dati.data},2) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+
+    // inserimento
+    await sql.transaction(transactionQueries);
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore. Impossibile creare la corsa",
+      error: error,
+      enteredFormData: rawData,
+    };
+  }
+  revalidatePath("/esercizio"); // clear cached path
+  redirect("/esercizio"); // redirect
+}
+
+export async function editCorsa(
+  treno: Treno,
+  prevState: StateCorsa,
+  formData: FormData,
+) {
+  console.log(formData);
+  console.log(treno);
+
+  // prende campo name e non id! (gli input html)
+  const validatedFields = corsaSchema.safeParse({
+    data: treno.data,
+    codiceTreno: treno.codice,
+    convoglio: treno.convoglio,
+    andata1: formData.get("andata1"),
+    andata2: formData.get("andata2"),
+    andata3: formData.get("andata3"),
+    andata4: formData.get("andata4"),
+    andata5: formData.get("andata5"),
+    andata6: formData.get("andata6"),
+    andata7: formData.get("andata7"),
+    andata8: formData.get("andata8"),
+    andata9: formData.get("andata9"),
+    ritorno2: formData.get("ritorno2"),
+    ritorno3: formData.get("ritorno3"),
+    ritorno4: formData.get("ritorno4"),
+    ritorno5: formData.get("ritorno5"),
+    ritorno6: formData.get("ritorno6"),
+    ritorno7: formData.get("ritorno7"),
+    ritorno8: formData.get("ritorno8"),
+    ritorno9: formData.get("ritorno9"),
+    ritorno10: formData.get("ritorno10"),
+  });
+
+  const rawData = {
+    data:new Intl.DateTimeFormat('sv-SE').format(treno.data) as string,
+    codiceTreno: treno.codice.toString() as string,
+    convoglio: treno.convoglio.toString() as string,
+    andata1: formData.get("andata1") as string,
+    andata2: formData.get("andata2") as string,
+    andata3: formData.get("andata3") as string,
+    andata4: formData.get("andata4") as string,
+    andata5: formData.get("andata5") as string,
+    andata6: formData.get("andata6") as string,
+    andata7: formData.get("andata7") as string,
+    andata8: formData.get("andata8") as string,
+    andata9: formData.get("andata9") as string,
+    ritorno2: formData.get("ritorno2") as string,
+    ritorno3: formData.get("ritorno3") as string,
+    ritorno4: formData.get("ritorno4") as string,
+    ritorno5: formData.get("ritorno5") as string,
+    ritorno6: formData.get("ritorno6") as string,
+    ritorno7: formData.get("ritorno7") as string,
+    ritorno8: formData.get("ritorno8") as string,
+    ritorno9: formData.get("ritorno9") as string,
+    ritorno10: formData.get("ritorno10") as string,
+  };
+
+  //uscita anticipata in caso di errori di validazione
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Campi mancanti. Modifica corsa fallita.",
+      enteredFormData: rawData,
+    };
+  }
+
+  const dati = validatedFields.data;
+
+  try {
+    // controlla se ci sono treni con lo stesso codice e data di quello che si vuole modificare
+    const trenoPresente =
+      await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
+    if (trenoPresente.length === 0)
+      return {
+        message: "Errore. Impossibile modificare un treno inesistente",
+        enteredFormData: rawData,
+      };
+
+    // prendi tutte le stazioni
+    const stazioni = await fetchStazioni();
+
+    // uscita anticipata in caso di utilizzo di materiali rotabili sovrapposti
+    const materialePresente = await sql`
+      -- Materiali in viaggio 
+      SELECT mat.* 
+      FROM materiale_rotabile AS mat
+      INNER JOIN composizione AS comp ON comp.id_mat = mat.id
+      INNER JOIN convoglio ON comp.convoglio = convoglio.id
+      INNER JOIN treno ON convoglio.id = treno.convoglio
+      INNER JOIN traccia_corrente as traccia ON treno.data = traccia.data AND treno.codice = traccia.treno
+      WHERE traccia.data = ${dati.data} AND traccia.treno <> ${dati.codiceTreno}
+      GROUP BY mat.id
+      HAVING MAX(traccia.orario_arrivo)>${dati.andata1} AND MIN(traccia.orario_partenza)<${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))}
+      INTERSECT
+      -- Materiali appartenenti a un determinato convoglio
+      SELECT mat.* 
+      FROM materiale_rotabile AS mat
+      INNER JOIN composizione AS comp ON comp.id_mat = mat.id
+      INNER JOIN convoglio ON comp.convoglio = convoglio.id
+      WHERE convoglio.id = ${dati.convoglio};
+      `;
+    if (materialePresente.length !== 0) {
+      return {
+        message:
+          "Errore. Impossibile creare un treno avente materiale rotabile contenuto in un altro treno in viaggio nell'intervallo specificato",
+        enteredFormData: rawData,
+      };
+    }
+    // init array di query
+    const transactionQueries = [];
+
+    // ciclare sulle subtratte di andata
+    let conflittoSubtratte;
+    let orarioArrivo;
+    let orarioPartenza;
+    let orarioPartenzaSucc;
+    let minPercorrenzaSubtratta;
+    // ANDATA
+    for (let i = 1; i < 10; i++) {
+      // minuti di percorrenza della subtratta corrente
+      minPercorrenzaSubtratta = (
+        Math.abs(stazioni[i].km - stazioni[i - 1].km) * 1.2
+      ).toFixed(2);
+      //partenza dalla stazione corrente
+      orarioPartenza = dati[`andata${i}` as keyof typeof dati];
+      //arrivo alla stazione successiva
+      orarioArrivo = sommaMinuti(
+        orarioPartenza as string,
+        minPercorrenzaSubtratta,
+      );
+      //partenza dalla stazione successiva
+      orarioPartenzaSucc =
+        i < 9 ? dati[`andata${i + 1}` as keyof typeof dati] : dati.ritorno10;
+      // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
+      if (orarioPartenzaSucc < orarioArrivo) {
+        return {
+          message: `Per la subtratta: ${stazioni[i - 1].nome} - ${stazioni[i].nome}, l'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i].nome} è successiva all'orario minima di arrivo ${orarioArrivo}`,
+          enteredFormData: rawData,
+        };
+      }
+      // cerca subtratte sovrapposte agli orari che si vogliono creare
+      conflittoSubtratte = await sql`
+                SELECT * from subtratta as sb
+                WHERE data_treno = ${dati.data} 
+                AND codice_treno <> ${dati.codiceTreno}
+                AND stazione_a = ${stazioni[i - 1].nome}
+                AND stazione_b = ${stazioni[i].nome}
+                AND ${orarioArrivo}>inizio_occupazione 
+                AND ${orarioPartenza}<fine_occupazione
+            `;
+      // se ci sono subtratte sovrapposte allora uscita anticipata
+      if (conflittoSubtratte.length > 0) {
+        return {
+          message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i].nome}"
+                        è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+          enteredFormData: rawData,
+        };
+      }
+
+      // query di modifica andata
+      transactionQueries.push(sql`UPDATE traccia_corrente 
+                                  SET orario_partenza = ${orarioPartenza},
+                                    orario_arrivo = ${i > 1 ? sommaMinuti(dati[`andata${i - 1}` as keyof typeof dati] as string, (Math.abs(stazioni[i - 1].km - stazioni[i - 2].km) * 1.2).toFixed(2)) : null}
+                                  WHERE treno=${dati.codiceTreno}
+                                    AND data=${dati.data}
+                                    AND stazione=${stazioni[i - 1].nome}
+                                    AND progressivo=1`);
+      // subtratta
+      transactionQueries.push(sql`UPDATE subtratta 
+                                  SET inizio_occupazione=${orarioPartenza},
+                                    fine_occupazione=${orarioArrivo}
+                                  WHERE stazione_a=${stazioni[i - 1].nome}
+                                    AND stazione_b=${stazioni[i].nome}
+                                    AND codice_treno=${dati.codiceTreno}
+                                    and data_treno=${dati.data}
+        `);
+    }
+
+    // RITORNO
+    for (let i = 10; i > 1; i--) {
+      // minuti di percorrenza della subtratta corrente
+      minPercorrenzaSubtratta = (
+        Math.abs(stazioni[i - 1].km - stazioni[i - 2].km) * 1.2
+      ).toFixed(2);
+      //partenza dalla stazione corrente
+      orarioPartenza = dati[`ritorno${i}` as keyof typeof dati];
+      //arrivo alla stazione successiva
+      orarioArrivo = sommaMinuti(
+        dati[`ritorno${i}` as keyof typeof dati] as string,
+        minPercorrenzaSubtratta,
+      );
+      //partenza dalla stazione successiva
+      orarioPartenzaSucc =
+        i > 2 && dati[`ritorno${i - 1}` as keyof typeof dati];
+      // se l'orario di partenza dalla stazione successiva è anteriore all'orario di arrivo alla stazione successiva allora uscita anticipata
+      if (orarioPartenzaSucc && orarioPartenzaSucc < orarioArrivo) {
+        return {
+          message: `Per la subtratta: ${stazioni[i - 1].nome} - ${stazioni[i - 2].nome}, l'orario di partenza ${orarioPartenzaSucc} da ${stazioni[i - 2].nome} è successiva all'orario minima di arrivo ${orarioArrivo}`,
+          enteredFormData: rawData,
+        };
+      }
+      // cerca subtratte sovrapposte agli orari che si vogliono creare
+      conflittoSubtratte = await sql`
+                SELECT * from subtratta as sb
+                WHERE data_treno = ${dati.data}
+                AND codice_treno <> ${dati.codiceTreno}
+                AND stazione_a = ${stazioni[i - 1].nome}
+                AND stazione_b = ${stazioni[i - 2].nome}
+                AND ${orarioArrivo}>inizio_occupazione 
+                AND ${orarioPartenza}<fine_occupazione
+            `;
+      // se ci sono subtratte sovrapposte allora uscita anticipata
+      if (conflittoSubtratte.length > 0) {
+        return {
+          message: `L'orario della subtratta "${stazioni[i - 1].nome} - ${stazioni[i - 2].nome}"
+                        è sovrapposta con l'orario del treno ${conflittoSubtratte.map((sub) => sub?.codice_treno)}`,
+          enteredFormData: rawData,
+        };
+      }
+
+      //query di modifica ritorno
+      //traccia
+      transactionQueries.push(sql`UPDATE traccia_corrente 
+                                  SET orario_partenza = ${orarioPartenza},
+                                    orario_arrivo = ${
+                                      i < 10
+                                        ? sommaMinuti(
+                                            dati[
+                                              `ritorno${i + 1}` as keyof typeof dati
+                                            ] as string,
+                                            (
+                                              Math.abs(
+                                                stazioni[i - 1].km -
+                                                  stazioni[i].km,
+                                              ) * 1.2
+                                            ).toFixed(2),
+                                          )
+                                        : sommaMinuti(
+                                            dati[
+                                              `andata${i - 1}` as keyof typeof dati
+                                            ] as string,
+                                            (
+                                              Math.abs(
+                                                stazioni[i - 1].km -
+                                                  stazioni[i - 2].km,
+                                              ) * 1.2
+                                            ).toFixed(2),
+                                          )
+                                    }
+                                  WHERE treno=${dati.codiceTreno}
+                                    AND data=${dati.data}
+                                    AND stazione=${stazioni[i - 1].nome}
+                                    AND progressivo=${i == 10 ? 1 : 2}`);
+      // subtratta
+      transactionQueries.push(sql`UPDATE subtratta 
+                                  SET inizio_occupazione=${orarioPartenza},
+                                    fine_occupazione=${orarioArrivo}
+                                  WHERE stazione_a=${stazioni[i - 1].nome}
+                                    AND stazione_b=${stazioni[i - 2].nome}
+                                    AND codice_treno=${dati.codiceTreno}
+                                    and data_treno=${dati.data}
+        `);
     }
 
     // inserimento traccia ritorno della prima stazione

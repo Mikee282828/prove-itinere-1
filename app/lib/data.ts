@@ -1,4 +1,9 @@
-import { MaterialeRotabile, Stazione, TracciaCorrente } from "./definitions";
+import {
+  MaterialeRotabile,
+  Stazione,
+  TracciaCorrente,
+  Treno,
+} from "./definitions";
 import { neon } from "@neondatabase/serverless";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -84,10 +89,44 @@ export async function fetchTracceCorrenti(
     const tracce = await sql`
     SELECT * from traccia_corrente
     WHERE data = ${data} AND data >= NOW()::DATE
-    ORDER BY treno ASC;
+    ORDER BY orario_partenza ASC, orario_arrivo ASC;
     `;
-    console.log(tracce);
+    //console.log(tracce);
     return tracce as TracciaCorrente[];
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch data.");
+  }
+}
+
+export async function fetchTracceCorrentiConId(
+  data: string,
+  codiceTreno: string,
+): Promise<TracciaCorrente[]> {
+  try {
+    const tracce = await sql`
+    SELECT * from traccia_corrente
+    WHERE data = ${data} AND data >= NOW()::DATE AND treno = ${codiceTreno}
+    ORDER BY orario_partenza ASC;
+    `;
+    //console.log(tracce);
+    return tracce as TracciaCorrente[];
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch data.");
+  }
+}
+
+export async function fetchTreno(
+  data: string,
+  codiceTreno: string,
+): Promise<Treno[]> {
+  try {
+    const treno = await sql`
+      SELECT data,codice,convoglio from treno 
+      WHERE codice=${codiceTreno} AND data=${data};
+    `;
+    return treno as Treno[];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch data.");

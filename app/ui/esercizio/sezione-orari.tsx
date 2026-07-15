@@ -26,7 +26,10 @@ export default function SezioneOrari({
         ? Object.groupBy(tracceSmistate["2"], (traccia) => traccia.treno)
         : undefined;
     }
-
+    
+    console.log("smistate",tracceSmistate)
+    console.log("andata",tracceAndata)
+    console.log("ritorno",tracceRitorno)
 
     return (
       <div className="p-8">
@@ -49,7 +52,7 @@ export default function SezioneOrari({
                   {tracceAndata && Object.values(tracceAndata).map((tracceArray) => {
                     return (
                       <div key={tracceArray?.[0].treno + "andata"}>
-                        <strong className="border-b-2">Treno: {tracceArray?.[0].treno}</strong>
+                        <Link href={`/esercizio/${tracceArray?.[0].treno}_${new Intl.DateTimeFormat('sv-SE').format(tracceArray?.[0].data)}/edit`}><strong className="border-b-2 hover:opacity-50">Treno: {tracceArray?.[0].treno}</strong></Link>
                         {tracceArray?.map((element) => {
                           return (
                             <div key={element.orario_partenza?.slice(0, 5) + "andata"}>
@@ -122,15 +125,15 @@ export default function SezioneOrari({
                   {tracceRitorno && Object.values(tracceRitorno).map((tracceArray) => {
                     return (
                       <div key={tracceArray?.[0].treno + "ritorno"}>
-                        <strong className="border-b-2">Treno: {tracceArray?.[0].treno}</strong>
+                        <Link href={`/esercizio/${tracceArray?.[0].treno}_${new Intl.DateTimeFormat('sv-SE').format(tracceArray?.[0].data)}/edit`}><strong className="border-b-2 hover:opacity-50">Treno: {tracceArray?.[0].treno}</strong></Link>
                         {[...(tracceArray ?? [])].reverse().map((element) => {
                           return (
                             <div key={element.orario_partenza?.slice(0, 5) + "ritorno"}>
                               <div>
-                                {element.orario_arrivo?.slice(0, 5)}&#8203; {/* carattere vuoto */}
+                                {element.orario_partenza?.slice(0, 5)}
                               </div>
                               <div>
-                                {element.orario_partenza?.slice(0, 5)}
+                                {element.orario_arrivo?.slice(0, 5)} {/* carattere vuoto */}
                               </div>
                             </div>)
                         })}
