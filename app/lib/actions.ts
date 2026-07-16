@@ -357,7 +357,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
                                         ${orarioPartenza},
                                         ${stazioni[i - 1].nome},
                                         ${dati.codiceTreno},
-                                        ${dati.data},${i==10 ? 1 : 2}) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+                                        ${dati.data},${i == 10 ? 1 : 2}) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
       // subtratta
       transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
                                         VALUES (${stazioni[i - 1].nome},${stazioni[i - 2].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
@@ -387,9 +387,6 @@ export async function editCorsa(
   prevState: StateCorsa,
   formData: FormData,
 ) {
-  console.log(formData);
-  console.log(treno);
-
   // prende campo name e non id! (gli input html)
   const validatedFields = corsaSchema.safeParse({
     data: treno.data,
@@ -416,7 +413,7 @@ export async function editCorsa(
   });
 
   const rawData = {
-    data:new Intl.DateTimeFormat('sv-SE').format(treno.data) as string,
+    data: new Intl.DateTimeFormat("sv-SE").format(treno.data) as string,
     codiceTreno: treno.codice.toString() as string,
     convoglio: treno.convoglio.toString() as string,
     andata1: formData.get("andata1") as string,
@@ -662,4 +659,68 @@ export async function editCorsa(
   }
   revalidatePath("/esercizio"); // clear cached path
   redirect("/esercizio"); // redirect
+}
+
+const deleteSchema = corsaSchema.omit({
+  andata1: true,
+  andata2: true,
+  andata3: true,
+  andata4: true,
+  andata5: true,
+  andata6: true,
+  andata7: true,
+  andata8: true,
+  andata9: true,
+  ritorno2: true,
+  ritorno3: true,
+  ritorno4: true,
+  ritorno5: true,
+  ritorno6: true,
+  ritorno7: true,
+  ritorno8: true,
+  ritorno9: true,
+  ritorno10: true,
+});
+export default async function deleteCorsa(treno: Treno, prevState: StateCorsa) {
+
+  const validatedFields = deleteSchema.safeParse({
+    data: treno.data,
+    codiceTreno: treno.codice,
+    convoglio: treno.data
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Impossibile eliminare la corsa",
+    };
+  }
+
+  const dati = validatedFields.data;
+
+  const transactionQueries = [];
+
+  transactionQueries.push(
+    sql`DELETE FROM subtratta WHERE codice_treno=${dati.codiceTreno} AND data_treno=${dati.data}`,
+  );
+
+  transactionQueries.push(
+    sql`DELETE FROM traccia_corrente WHERE treno=${dati.codiceTreno} AND data=${dati.data}`,
+  );
+
+  transactionQueries.push(
+    sql`DELETE FROM treno WHERE codice=${dati.codiceTreno} AND data=${dati.data}`,
+  );
+
+  try {
+    await sql.transaction(transactionQueries);
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore. Impossibile eliminare la corsa",
+      error: error,
+    };
+  }
+
+  redirect("/esercizio");
 }
