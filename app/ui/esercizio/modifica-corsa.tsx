@@ -1,7 +1,7 @@
 "use client";
 import { Button } from "../button";
 import { Stazione, TracciaCorrente, Treno } from "@/app/lib/definitions";
-import deleteCorsa, { editCorsa, StateCorsa } from "@/app/lib/actions";
+import { editCorsa, StateCorsa, deleteCorsa } from "@/app/lib/actions";
 import { useActionState } from "react";
 
 export default function Form({
@@ -13,7 +13,7 @@ export default function Form({
   tracce: TracciaCorrente[],
   treno: Treno[]
 }) {
-  const initialState: StateCorsa = { message: null, errors: {} };
+  const initialState: StateCorsa = { message: null, errors: {}};
 
   const editCorsaConTreno = editCorsa.bind(null, treno[0]);
   const deleteCorsaConTreno = deleteCorsa.bind(null, treno[0]);

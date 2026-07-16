@@ -109,7 +109,10 @@ export type StateCorsa = {
   };
 };
 
-export async function createCorsa(prevState: StateCorsa, formData: FormData) {
+export async function createCorsa(
+  prevState: StateCorsa,
+  formData: FormData,
+): Promise<StateCorsa> {
   // prende campo name e non id! (gli input html)
   const validatedFields = corsaSchema.safeParse({
     data: formData.get("data"),
@@ -374,7 +377,7 @@ export async function createCorsa(prevState: StateCorsa, formData: FormData) {
     console.error(error);
     return {
       message: "Errore. Impossibile creare la corsa",
-      error: error,
+      errors: {},
       enteredFormData: rawData,
     };
   }
@@ -386,7 +389,7 @@ export async function editCorsa(
   treno: Treno,
   prevState: StateCorsa,
   formData: FormData,
-) {
+): Promise<StateCorsa> {
   // prende campo name e non id! (gli input html)
   const validatedFields = corsaSchema.safeParse({
     data: treno.data,
@@ -650,10 +653,8 @@ export async function editCorsa(
     // inserimento
     await sql.transaction(transactionQueries);
   } catch (error) {
-    console.error(error);
     return {
       message: "Errore. Impossibile creare la corsa",
-      error: error,
       enteredFormData: rawData,
     };
   }
@@ -681,18 +682,20 @@ const deleteSchema = corsaSchema.omit({
   ritorno9: true,
   ritorno10: true,
 });
-export default async function deleteCorsa(treno: Treno, prevState: StateCorsa) {
-
+export async function deleteCorsa(
+  treno: Treno,
+  prevState: StateCorsa,
+): Promise<StateCorsa> {
   const validatedFields = deleteSchema.safeParse({
     data: treno.data,
     codiceTreno: treno.codice,
-    convoglio: treno.data
+    convoglio: treno.convoglio,
   });
 
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
-      message: "Impossibile eliminare la corsa",
+      message: "Validazione treno fallita",
     };
   }
 
@@ -715,10 +718,8 @@ export default async function deleteCorsa(treno: Treno, prevState: StateCorsa) {
   try {
     await sql.transaction(transactionQueries);
   } catch (error) {
-    console.error(error);
     return {
       message: "Errore. Impossibile eliminare la corsa",
-      error: error,
     };
   }
 
