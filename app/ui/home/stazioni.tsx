@@ -16,7 +16,7 @@ export default async function Stazioni() {
             <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary z-10" />
             <Card className="w-full hover:shadow-md transition-shadow">
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Km {parseFloat(stazione.km).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mb-1">Km {parseFloat(String(stazione.km)).toFixed(2)}</p>
                 <p className="font-medium text-sm">{stazione.nome}</p>
               </CardContent>
             </Card>
@@ -30,7 +30,7 @@ export default async function Stazioni() {
             <div className="hidden lg:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-4 h-4 rounded-full bg-primary z-10" />
             <Card className="w-full hover:shadow-md transition-shadow">
               <CardContent className="p-4 text-center">
-                <p className="text-xs text-muted-foreground mb-1">Km {parseFloat(stazione.km).toFixed(2)}</p>
+                <p className="text-xs text-muted-foreground mb-1">Km {parseFloat(String(stazione.km)).toFixed(2)}</p>
                 <p className="font-medium text-sm">{stazione.nome}</p>
               </CardContent>
             </Card>
