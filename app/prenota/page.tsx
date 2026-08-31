@@ -1,8 +1,9 @@
+import Search from "../ui/prenota/search";
 
 export default function Page(){
   return(
-    <div>
-      Prenota
+    <div className="h-screen">
+      <Search/  >
     </div>
   )
 }
