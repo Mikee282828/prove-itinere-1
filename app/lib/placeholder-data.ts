@@ -300,16 +300,12 @@ export const composizioni: Composizione[] = [
 ];
 //8
 export const traccePassate: TracciaPassata[] = [
-  // ==========================================
-  // CORSA DI ANDATA (Progressivo: 1)
-  // ==========================================
   {
     stazione: "Torre Spaventa",
     orario_arrivo: null,
     orario_partenza: "10:43:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Prato Terra",
@@ -317,7 +313,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "10:57:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Rocca Pietrosa",
@@ -325,7 +320,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "11:15:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Villa Pietrosa",
@@ -333,7 +327,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "11:27:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Villa Santa Maria",
@@ -341,7 +334,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "11:42:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Pietra Santa Maria",
@@ -349,7 +341,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "11:58:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Castro Marino",
@@ -357,7 +348,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "12:12:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Porto Spigola",
@@ -365,7 +355,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "12:25:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Porto San Felice",
@@ -373,7 +362,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "12:40:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
   {
     stazione: "Villa San Felice",
@@ -381,20 +369,17 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "13:15:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 1,
   },
 
   // ==========================================
-  // CORSA DI RITORNO (Progressivo: 2)
-  // Il treno ripassa dalle stesse stazioni al contrario
   // ==========================================
+  
   {
     stazione: "Porto San Felice",
     orario_arrivo: "13:30:00",
     orario_partenza: "13:32:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Porto Spigola",
@@ -402,7 +387,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "13:47:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Castro Marino",
@@ -410,7 +394,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "14:00:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Pietra Santa Maria",
@@ -418,7 +401,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "14:15:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Villa Santa Maria",
@@ -426,7 +408,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "14:30:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Villa Pietrosa",
@@ -434,7 +415,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "14:45:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Rocca Pietrosa",
@@ -442,7 +422,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "14:58:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Prato Terra",
@@ -450,7 +429,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: "15:15:00",
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   },
   {
     stazione: "Torre Spaventa",
@@ -458,7 +436,6 @@ export const traccePassate: TracciaPassata[] = [
     orario_partenza: null, // Fine del servizio per questa coppia/giorno
     data: new Date("2025-12-01"),
     treno: 1,
-    progressivo: 2,
   }
 ];
 //9

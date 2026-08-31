@@ -17,16 +17,16 @@ export default function SezioneOrari({
     let tracceAndata;
     let tracceRitorno;
 
-    if (tracce && tracce.length > 0) {
-      tracceSmistate = tracce && Object.groupBy(tracce, (traccia) => traccia.progressivo)
-      tracceAndata = tracceSmistate?.["1"]
-        ? Object.groupBy(tracceSmistate["1"], (traccia) => traccia.treno)
-        : undefined;
-      tracceRitorno = tracceSmistate?.["2"]
-        ? Object.groupBy(tracceSmistate["2"], (traccia) => traccia.treno)
-        : undefined;
-    }
-
+    // if (tracce && tracce.length > 0) {
+    //   tracceSmistate = tracce && Object.groupBy(tracce, (traccia) => traccia.progressivo)
+    //   tracceAndata = tracceSmistate?.["1"]
+    //     ? Object.groupBy(tracceSmistate["1"], (traccia) => traccia.treno)
+    //     : undefined;
+    //   tracceRitorno = tracceSmistate?.["2"]
+    //     ? Object.groupBy(tracceSmistate["2"], (traccia) => traccia.treno)
+    //     : undefined;
+    // }
+    // SEZIONE DA REVISIONARE COMPLETAMENTE !!!
     return (
       <div className="p-8">
         <Link

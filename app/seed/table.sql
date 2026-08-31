@@ -59,8 +59,7 @@ CREATE TABLE traccia_passata (
     stazione        VARCHAR(255) NOT NULL,
     data            DATE         NOT NULL,
     treno           INT          NOT NULL,
-    progressivo     INT          NOT NULL,
-    PRIMARY KEY (progressivo, treno, data, stazione),
+    PRIMARY KEY (treno, data, stazione),
     FOREIGN KEY (stazione)     REFERENCES stazione(nome),
     FOREIGN KEY (treno, data)  REFERENCES treno(codice, data)
 );
@@ -71,8 +70,7 @@ CREATE TABLE traccia_corrente (
     stazione        VARCHAR(255) NOT NULL,
     treno           INT          NOT NULL,
     data            DATE         NOT NULL,
-    progressivo     INT          NOT NULL,
-    PRIMARY KEY (progressivo, data, treno, stazione),
+    PRIMARY KEY (data, treno, stazione),
     FOREIGN KEY (stazione)    REFERENCES stazione(nome),
     FOREIGN KEY (treno, data) REFERENCES treno(codice, data)
 );

@@ -51,7 +51,6 @@ export type TracciaPassata = {
   stazione: string;
   data: Date;
   treno: number;
-  progressivo: number;
 };
 
 //9
@@ -61,7 +60,6 @@ export type TracciaCorrente = {
   stazione: string;
   data: Date;
   treno: number;
-  progressivo: number;
 };
 
 //10

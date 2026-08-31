@@ -84,8 +84,7 @@ export async function GET() {
         stazione        VARCHAR(255) NOT NULL,
         data            DATE         NOT NULL,
         treno           INT          NOT NULL,
-        progressivo     INT          NOT NULL,
-        PRIMARY KEY (progressivo, treno, data, stazione),
+        PRIMARY KEY (treno, data, stazione),
         FOREIGN KEY (stazione)     REFERENCES stazione(nome),
         FOREIGN KEY (treno, data)  REFERENCES treno(codice, data)
       );
@@ -97,8 +96,7 @@ export async function GET() {
         stazione        VARCHAR(255) NOT NULL,
         treno           INT          NOT NULL,
         data            DATE         NOT NULL,
-        progressivo     INT          NOT NULL,
-        PRIMARY KEY (progressivo, data, treno, stazione),
+        PRIMARY KEY (data, treno, stazione),
         FOREIGN KEY (stazione)    REFERENCES stazione(nome),
         FOREIGN KEY (treno, data) REFERENCES treno(codice, data)
       );
@@ -213,11 +211,11 @@ export async function GET() {
     });
 
     traccePassate.forEach((tr) => {
-      transactionQueries.push(sql`INSERT INTO traccia_passata (orario_arrivo, orario_partenza, stazione, data, treno, progressivo) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}, ${tr.progressivo}) ON CONFLICT (progressivo, treno, data, stazione) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO traccia_passata (orario_arrivo, orario_partenza, stazione, data, treno) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}) ON CONFLICT (treno, data, stazione) DO NOTHING;`);
     });
 
     tracceCorrenti.forEach((tr) => {
-      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo, orario_partenza, stazione, data, treno, progressivo) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}, ${tr.progressivo}) ON CONFLICT (progressivo, treno, data, stazione) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo, orario_partenza, stazione, data, treno) VALUES (${tr.orario_arrivo}, ${tr.orario_partenza}, ${tr.stazione}, ${tr.data}, ${tr.treno}) ON CONFLICT (treno, data, stazione) DO NOTHING;`);
     });
 
     prenotazioni.forEach((pr) => {

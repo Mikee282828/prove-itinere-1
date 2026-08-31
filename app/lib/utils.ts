@@ -9,26 +9,26 @@ export function cn(...inputs: ClassValue[]) {
 
 const modelloGiornaliero = [
   // ANDATA
-  { stazione: "Torre Spaventa", arrivo: null, partenza: "10:43:00", prog: 1 },
-  { stazione: "Prato Terra", arrivo: "10:55:00", partenza: "10:57:00", prog: 1 },
-  { stazione: "Rocca Pietrosa", arrivo: "11:12:00", partenza: "11:15:00", prog: 1 },
-  { stazione: "Villa Pietrosa", arrivo: "11:25:00", partenza: "11:27:00", prog: 1 },
-  { stazione: "Villa Santa Maria", arrivo: "11:40:00", partenza: "11:42:00", prog: 1 },
-  { stazione: "Pietra Santa Maria", arrivo: "11:55:00", partenza: "11:58:00", prog: 1 },
-  { stazione: "Castro Marino", arrivo: "12:10:00", partenza: "12:12:00", prog: 1 },
-  { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00", prog: 1 },
-  { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00", prog: 1 },
-  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: "13:15:00", prog: 1 },
+  { stazione: "Torre Spaventa", arrivo: null, partenza: "10:43:00"},
+  { stazione: "Prato Terra", arrivo: "10:55:00", partenza: "10:57:00"},
+  { stazione: "Rocca Pietrosa", arrivo: "11:12:00", partenza: "11:15:00"},
+  { stazione: "Villa Pietrosa", arrivo: "11:25:00", partenza: "11:27:00"},
+  { stazione: "Villa Santa Maria", arrivo: "11:40:00", partenza: "11:42:00"},
+  { stazione: "Pietra Santa Maria", arrivo: "11:55:00", partenza: "11:58:00"},
+  { stazione: "Castro Marino", arrivo: "12:10:00", partenza: "12:12:00"},
+  { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00"},
+  { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00"},
+  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: "13:15:00"},
   // RITORNO
-  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00", prog: 2 },
-  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:47:00", prog: 2 },
-  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00", prog: 2 },
-  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00", prog: 2 },
-  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00", prog: 2 },
-  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00", prog: 2 },
-  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00", prog: 2 },
-  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00", prog: 2 },
-  { stazione: "Torre Spaventa", arrivo: "15:30:00", partenza: null, prog: 2 }
+  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00"},
+  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:47:00"},
+  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00"},
+  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00"},
+  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00"},
+  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00"},
+  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00"},
+  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00"},
+  { stazione: "Torre Spaventa", arrivo: "15:30:00", partenza: null}
 ];
 
 export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
@@ -49,7 +49,6 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
         orario_partenza: modello.partenza,
         data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
         treno: 1,
-        progressivo: modello.prog
       });
     });
   }

@@ -279,12 +279,12 @@ export async function createCorsa(
       }
       // query di inserimento andata
       //traccia
-      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
+      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
                                         VALUES (${i > 1 ? sommaMinuti(dati[`andata${i - 1}` as keyof typeof dati] as string, (Math.abs(stazioni[i - 1].km - stazioni[i - 2].km) * 1.2).toFixed(2)) : null},
                                         ${orarioPartenza},
                                         ${stazioni[i - 1].nome},
                                         ${dati.codiceTreno},
-                                        ${dati.data},1) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+                                        ${dati.data},1) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
       // subtratta
       transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
                                         VALUES (${stazioni[i - 1].nome},${stazioni[i].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
@@ -331,7 +331,7 @@ export async function createCorsa(
         };
       }
       //traccia
-      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
+      transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
                                         VALUES (${
                                           i < 10
                                             ? sommaMinuti(
@@ -360,7 +360,7 @@ export async function createCorsa(
                                         ${orarioPartenza},
                                         ${stazioni[i - 1].nome},
                                         ${dati.codiceTreno},
-                                        ${dati.data},${i == 10 ? 1 : 2}) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+                                        ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
       // subtratta
       transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
                                         VALUES (${stazioni[i - 1].nome},${stazioni[i - 2].nome},${orarioPartenza},${orarioArrivo},${dati.codiceTreno},${dati.data});
@@ -368,8 +368,8 @@ export async function createCorsa(
     }
 
     // inserimento traccia ritorno della prima stazione
-    transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
-                                VALUES (${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))},null,${stazioni[0].nome},${dati.codiceTreno},${dati.data},2) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+    transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
+                                VALUES (${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))},null,${stazioni[0].nome},${dati.codiceTreno},${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
 
     // inserimento
     await sql.transaction(transactionQueries);
@@ -548,7 +548,7 @@ export async function editCorsa(
                                   WHERE treno=${dati.codiceTreno}
                                     AND data=${dati.data}
                                     AND stazione=${stazioni[i - 1].nome}
-                                    AND progressivo=1`);
+                                    `);
       // subtratta
       transactionQueries.push(sql`UPDATE subtratta 
                                   SET inizio_occupazione=${orarioPartenza},
@@ -634,7 +634,7 @@ export async function editCorsa(
                                   WHERE treno=${dati.codiceTreno}
                                     AND data=${dati.data}
                                     AND stazione=${stazioni[i - 1].nome}
-                                    AND progressivo=${i == 10 ? 1 : 2}`);
+                                    `);
       // subtratta
       transactionQueries.push(sql`UPDATE subtratta 
                                   SET inizio_occupazione=${orarioPartenza},
@@ -647,8 +647,8 @@ export async function editCorsa(
     }
 
     // inserimento traccia ritorno della prima stazione
-    transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data, progressivo)
-                                VALUES (${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))},null,${stazioni[0].nome},${dati.codiceTreno},${dati.data},2) ON CONFLICT (treno,data,stazione,progressivo) DO NOTHING;`);
+    transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
+                                VALUES (${sommaMinuti(dati.ritorno2, (Math.abs(stazioni[0].km - stazioni[1].km) * 1.2).toFixed(2))},null,${stazioni[0].nome},${dati.codiceTreno},${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
 
     // inserimento
     await sql.transaction(transactionQueries);
