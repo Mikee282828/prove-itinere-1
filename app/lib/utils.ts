@@ -19,16 +19,6 @@ const modelloGiornaliero = [
   { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00"},
   { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00"},
   { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: "13:15:00"},
-  // RITORNO
-  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00"},
-  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:47:00"},
-  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00"},
-  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00"},
-  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00"},
-  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00"},
-  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00"},
-  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00"},
-  { stazione: "Torre Spaventa", arrivo: "15:30:00", partenza: null}
 ];
 
 export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
