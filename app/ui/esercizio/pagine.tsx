@@ -3,7 +3,7 @@ import { MaterialeRotabile, Stazione, TracciaCorrente} from "@/app/lib/definitio
 import { Calendar, Settings, TrainIcon } from "lucide-react";
 import { useState } from "react";
 import SezioneMateriale from "./sezione-materiale";
-import SezioneConvoglio from "./sezione-composizione";
+import SezioneComposizione from "./sezione-composizione";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
 import SezioneOrari from "./sezione-orari";
 
@@ -65,7 +65,7 @@ export default function Pagine({
           </div>
         </section>
         <SezioneMateriale active={activeTab==="materiale"} materialeRotabile={materialeRotabile}/>
-        <SezioneConvoglio active={activeTab==="composizioni"} composizioni={composizioni} />
+        <SezioneComposizione active={activeTab==="composizioni"} composizioni={composizioni} />
         <SezioneOrari active={activeTab==="orari"} tracce={tracce} stazioni={stazioni}/>
       </main>
     </div>
