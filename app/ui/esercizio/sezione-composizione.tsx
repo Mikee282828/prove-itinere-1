@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
 import { Button } from "../button";
 import Link from "next/link";
+import { deleteConvoglio } from "@/app/lib/actions";
 
 export default function SezioneComposizione({ active, composizioni }: { active: boolean, composizioni: ConvoglioRaggruppato[] }) {
   if (active) {
@@ -23,11 +24,13 @@ export default function SezioneComposizione({ active, composizioni }: { active: 
                     <TrainIcon className="h-5 w-5 text-primary" />
                     Convoglio: {element.convoglio}
                     {/* Link modifica e cancellazione non funzionanti */}
-                    <Button className="bg-red-100 hover:bg-red-200">
-                      <Link href="/esercizio"><Trash /></Link>
+                    <Button className="bg-red-100 hover:bg-red-200" onClick={(e)=>{
+                      deleteConvoglio(element.convoglio)
+                    }}>
+                      <Trash />
                     </Button>
                     <Button className="bg-blue-100 hover:bg-blue-200">
-                      <Link href="/esercizio"><Pen /></Link>
+                      <Link href={`/esercizio/convoglio/${element.convoglio}/edit`}><Pen /></Link>
                     </Button>
                   </CardTitle>
                 </div>

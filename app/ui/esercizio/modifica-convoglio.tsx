@@ -2,17 +2,17 @@
 import { MaterialeRotabile } from "@/app/lib/definitions";
 import { Card, CardContent, CardDescription } from "../card";
 import { useActionState, useState } from "react";
-import { createConvoglio, State } from "@/app/lib/actions";
+import { updateConvoglio, State } from "@/app/lib/actions";
 import { Button } from "../button";
-import Link from "next/link";
 
-export default function Form({ materialeRotabile }: {
+export default function Form({ id, materialeRotabile }: {
+  id: string,
   materialeRotabile: MaterialeRotabile[] | null
 }) {
-
+  const updateConvoglioWithId = updateConvoglio.bind(null, id);
   const initialState: State = { message: null, errors: {} };
-  const [state, formAction] = useActionState(createConvoglio, initialState);
-
+  const [state, formAction] = useActionState(updateConvoglioWithId, initialState);
+  
   // useState
   const [selezionati, setSelezionati] = useState<string[]>([]);
   const [cliccato, setCliccato] = useState<boolean>(false);
@@ -35,10 +35,6 @@ export default function Form({ materialeRotabile }: {
 
   return (
     <form action={formAction}>
-      <div className="flex justify-between mb-4">
-        <div className="font-bold">Seleziona i materiali rotabili da utilizzare per il nuovo convoglio</div>
-        <Button><Link href="/esercizio">Torna indietro</Link></Button>
-      </div>
       <div className="grid grid-cols-4 gap-4">
         {materialeRotabile?.map((materiale) => {
           return (
@@ -77,30 +73,25 @@ export default function Form({ materialeRotabile }: {
           )
         })}
       </div>
-      <div className="flex justify-end">
-        <Button
-          type="submit"
-          className={"my-4"}
-          onClick={(e) => {
-            if (selezionati.length < 1) {
-              e.preventDefault();
-              handleCliccato();
-            }
-          }}
-        >
-          Crea convoglio!
-        </Button>
-      </div>
-
-      <div className="flex justify-end">
-        <div>Sono selezionati {selezionati.length} elementi</div>
-      </div>
+      <Button
+        type="submit"
+        className={"my-4"}
+        onClick={(e) => {
+          if (selezionati.length < 1) {
+            e.preventDefault();
+            handleCliccato();
+          }
+        }}
+      >
+        Modifica convoglio!
+      </Button>
       <div
         className={`${selezionati.length == 0 && cliccato ? "block" : "hidden"} text-red-500`}
       >
         Devi selezionare almeno 1 materiale!
       </div>
-      <div className="text-red-500">{state.message}</div>
+      <div>Sono selezionati {selezionati.length} elementi</div>
+      <div>{state.message}</div>
     </form>
 
   )

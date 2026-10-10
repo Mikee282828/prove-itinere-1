@@ -10,7 +10,7 @@ import { Treno } from "./definitions";
 
 const sql = neon(process.env.DATABASE_URL || "");
 
-const convoglioSchema = z.object({
+const CreateConvoglio = z.object({
   materiale: z
     .array(
       z.string("Selezionare almeno uno dei materiali rotabili disponibili"),
@@ -25,8 +25,10 @@ export type State = {
   message?: string | null;
 };
 
+// CONVOGLIO CRUD
+// CREATE CONVOGLIO
 export async function createConvoglio(prevState: State, formData: FormData) {
-  const validatedFields = convoglioSchema.safeParse({
+  const validatedFields = CreateConvoglio.safeParse({
     materiale: formData.getAll("materiale"),
   });
 
@@ -38,12 +40,12 @@ export async function createConvoglio(prevState: State, formData: FormData) {
   }
 
   const { materiale } = validatedFields.data;
-  console.log(materiale);
 
   try {
     const convoglioInserito =
       await sql`INSERT INTO convoglio DEFAULT VALUES RETURNING id`;
     console.log(convoglioInserito);
+    // promise all per aspettare che finiscano tutte le query prima di revalidate
     await Promise.all(
       materiale.map(async (mat) => {
         await sql`
@@ -59,6 +61,67 @@ export async function createConvoglio(prevState: State, formData: FormData) {
   }
   revalidatePath("/esercizio"); // clear cached path
   redirect("/esercizio"); // redirect
+}
+
+const UpdateConvoglio = z.object({
+  materiale: z
+    .array(
+      z.string("Selezionare almeno uno dei materiali rotabili disponibili"),
+    )
+    .nonempty(),
+});
+
+// UPDATE CONVOGLIO
+export async function updateConvoglio(
+  id: string,
+  prevState: State,
+  formData: FormData,
+) {
+  const validatedFields = UpdateConvoglio.safeParse({
+    materiale: formData.getAll("materiale"),
+  });
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Errore validazione",
+    };
+  }
+
+  const { materiale } = validatedFields.data;
+  console.log(materiale, id);
+  try {
+    const transactionQueries = [];
+    transactionQueries.push(
+      sql`DELETE FROM composizione WHERE convoglio=${id}`,
+    );
+    transactionQueries.push(sql`
+      INSERT INTO composizione (convoglio, id_mat)
+      SELECT ${id}, selected.id_mat
+      FROM unnest(${materiale}::varchar[]) AS selected(id_mat)`);
+
+    await sql.transaction(transactionQueries);
+  } catch (e) {
+    return {
+      message: "Errore database, impossibile modificare il convoglio.",
+    };
+  }
+  revalidatePath("/esercizio");
+  redirect("/esercizio");
+}
+
+export async function deleteConvoglio(id: string) {
+  try {
+    const transactionQueries = [];
+    transactionQueries.push(
+      sql`DELETE FROM composizione WHERE convoglio=${id}`,
+    );
+    transactionQueries.push(sql`DELETE FROM convoglio WHERE id = ${id}`);
+    await sql.transaction(transactionQueries);
+  } catch (error) {
+    console.error(error);
+  }
+  revalidatePath("/dashboard/invoices");
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
