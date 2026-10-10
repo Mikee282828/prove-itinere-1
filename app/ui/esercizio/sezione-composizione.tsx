@@ -10,9 +10,8 @@ export default function SezioneComposizione({ active, composizioni }: { active: 
       <div className="p-8">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold">Composizioni Treni</h2>
-          {/* link ancora non funzionante */}
           <Button>
-            <Link href="/esercizio">Crea convoglio</Link>
+            <Link href="/esercizio/crea-convoglio">Crea convoglio</Link>
           </Button>
         </div>
         <div className="grid gap-6">

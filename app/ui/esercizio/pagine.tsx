@@ -64,7 +64,7 @@ export default function Pagine({
             </div>
           </div>
         </section>
-        <SezioneMateriale active={activeTab==="materiale"} materialeRotabile={materialeRotabile}/>
+        {/* <SezioneMateriale active={activeTab==="materiale"} materialeRotabile={materialeRotabile}/> */}
         <SezioneComposizione active={activeTab==="composizioni"} composizioni={composizioni} />
         <SezioneOrari active={activeTab==="orari"} tracce={tracce} stazioni={stazioni}/>
       </main>

@@ -1,0 +1,97 @@
+"use client";
+import { MaterialeRotabile } from "@/app/lib/definitions";
+import { Card, CardContent, CardDescription } from "../card";
+import { useActionState, useState } from "react";
+import { createConvoglio, State } from "@/app/lib/actions";
+import { Button } from "../button";
+
+export default function Form({ materialeRotabile }: {
+  materialeRotabile: MaterialeRotabile[] | null
+}) {
+
+  const initialState: State = { message: null, errors: {} };
+  const [state, formAction] = useActionState(createConvoglio, initialState);
+
+  // useState
+  const [selezionati, setSelezionati] = useState<string[]>([]);
+  const [cliccato, setCliccato] = useState<boolean>(false);
+
+  const handleCheckboxChange = (id: string, isChecked: boolean) => {
+    if (isChecked) {
+      // Se viene spuntata, aggiungi l'ID all'array
+      setSelezionati((prev) => [...prev, id]);
+    } else {
+      // Se viene tolta la spunta, rimuovi l'ID dall'array
+      setSelezionati((prev) => prev.filter((item) => item !== id));
+    }
+  };
+  const handleCliccato = () => {
+    if (selezionati.length < 1 && cliccato === true) return;
+    if (selezionati.length < 1 && cliccato === false) {
+      setCliccato(true);
+    }
+  };
+
+  return (
+    <form action={formAction}>
+      <div className="grid grid-cols-4 gap-4">
+        {materialeRotabile?.map((materiale) => {
+          return (
+            <Card
+              key={materiale.id}
+              className="w-full hover:shadow-lg transition-shadow"
+            >
+              <CardContent>
+                Seleziona{" "}
+                <input
+                  type="checkbox"
+                  name="materiale"
+                  id={materiale.id}
+                  value={materiale.id}
+                  className="cursor-pointer"
+                  onChange={(e) => {
+                    handleCheckboxChange(materiale.id, e.target.checked);
+                  }}
+                />
+              </CardContent>
+              <CardContent className="p-4">
+                <p className="text-xs text-muted-foreground mb-1">
+                  Serie {materiale.modello}{" "}
+                </p>
+                <h3 className="font-semibold">{materiale.id}</h3>
+                <p className="text-xs text-muted-foreground mb-1">
+                  Tipologia {materiale.tipologia}
+                </p>
+              </CardContent>
+              <CardDescription className="p-4">
+                <p className="text-xs text-muted-foreground mb-1">
+                  {materiale.descrizione}
+                </p>
+              </CardDescription>
+            </Card>
+          )
+        })}
+      </div>
+      <Button
+        type="submit"
+        className={"my-4"}
+        onClick={(e) => {
+          if (selezionati.length < 1) {
+            e.preventDefault();
+            handleCliccato();
+          }
+        }}
+      >
+        Crea convoglio!
+      </Button>
+      <div
+        className={`${selezionati.length == 0 && cliccato ? "block" : "hidden"} text-red-500`}
+      >
+        Devi selezionare almeno 1 materiale!
+      </div>
+      <div>Sono selezionati {selezionati.length} elementi</div>
+      <div>{state.message}</div>
+    </form>
+
+  )
+}
