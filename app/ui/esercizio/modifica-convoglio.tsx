@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription } from "../card";
 import { useActionState, useState } from "react";
 import { updateConvoglio, State } from "@/app/lib/actions";
 import { Button } from "../button";
+import Link from "next/link";
 
 export default function Form({ id, materialeRotabile }: {
   id: string,
@@ -12,7 +13,7 @@ export default function Form({ id, materialeRotabile }: {
   const updateConvoglioWithId = updateConvoglio.bind(null, id);
   const initialState: State = { message: null, errors: {} };
   const [state, formAction] = useActionState(updateConvoglioWithId, initialState);
-  
+
   // useState
   const [selezionati, setSelezionati] = useState<string[]>([]);
   const [cliccato, setCliccato] = useState<boolean>(false);
@@ -35,6 +36,10 @@ export default function Form({ id, materialeRotabile }: {
 
   return (
     <form action={formAction}>
+        <div className="flex justify-between mb-4">
+        <div className="font-bold">Seleziona i materiali rotabili da utilizzare per il convoglio selezionato</div>
+        <Button><Link href="/esercizio">Torna indietro</Link></Button>
+      </div>
       <div className="grid grid-cols-4 gap-4">
         {materialeRotabile?.map((materiale) => {
           return (

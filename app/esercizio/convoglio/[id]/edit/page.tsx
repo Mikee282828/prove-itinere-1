@@ -9,8 +9,7 @@ export default async function Page({ params }: PageProps) {
   const { id } = await params;
   const materialeRotabile = await fetchMateriale();
   return (
-    <div>
-      {id}
+    <div className="p-8">
       <Form id={id} materialeRotabile={materialeRotabile}/>
     </div>
   )
