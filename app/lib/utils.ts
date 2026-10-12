@@ -21,6 +21,20 @@ const modelloGiornaliero = [
   { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: "13:15:00"},
 ];
 
+const modelloGiornalieroRitorno = [
+  // RITORNO
+  { stazione: "Villa San Felice", arrivo: null, partenza: "13:15:00"},
+  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00"},
+  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:48:00"},
+  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00"},
+  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00"},
+  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00"},
+  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00"},
+  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00"},
+  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00"},
+  { stazione: "Torre Spaventa", arrivo: "15:27:00", partenza: null},
+];
+
 export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
 
   if (dataInizio > dataFine) {
@@ -33,6 +47,16 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
   for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
 
     modelloGiornaliero.forEach((modello) => {
+      tutteLeTracce.push({
+        stazione: modello.stazione,
+        orario_arrivo: modello.arrivo,
+        orario_partenza: modello.partenza,
+        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+        treno: 1,
+      });
+    });
+
+    modelloGiornalieroRitorno.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
         orario_arrivo: modello.arrivo,
