@@ -65,7 +65,7 @@ export const treni: Treno[] = [
     convoglio: 5,
     data: new Date(),
   },
-  ...generaTreno(new Date("2070-01-01"),new Date("2070-01-31"))
+  ...generaTreno(new Date("2070-01-01"),new Date("2070-01-02"))
 ];
 //3
 export const stazioni: Stazione[] = [
@@ -366,80 +366,13 @@ export const traccePassate: TracciaPassata[] = [
   {
     stazione: "Villa San Felice",
     orario_arrivo: "12:55:00",
-    orario_partenza: "13:15:00",
+    orario_partenza: null,
     data: new Date("2025-12-01"),
     treno: 1,
   },
-
-  // ==========================================
-  // ==========================================
-  
-  {
-    stazione: "Porto San Felice",
-    orario_arrivo: "13:30:00",
-    orario_partenza: "13:32:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Porto Spigola",
-    orario_arrivo: "13:45:00",
-    orario_partenza: "13:47:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Castro Marino",
-    orario_arrivo: "13:58:00",
-    orario_partenza: "14:00:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Pietra Santa Maria",
-    orario_arrivo: "14:12:00",
-    orario_partenza: "14:15:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Villa Santa Maria",
-    orario_arrivo: "14:28:00",
-    orario_partenza: "14:30:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Villa Pietrosa",
-    orario_arrivo: "14:43:00",
-    orario_partenza: "14:45:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Rocca Pietrosa",
-    orario_arrivo: "14:55:00",
-    orario_partenza: "14:58:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Prato Terra",
-    orario_arrivo: "15:13:00",
-    orario_partenza: "15:15:00",
-    data: new Date("2025-12-01"),
-    treno: 1,
-  },
-  {
-    stazione: "Torre Spaventa",
-    orario_arrivo: "15:30:00",
-    orario_partenza: null, // Fine del servizio per questa coppia/giorno
-    data: new Date("2025-12-01"),
-    treno: 1,
-  }
 ];
 //9
-export const tracceCorrenti: TracciaCorrente[] = generaTracce(new Date("2070-01-01"),new Date("2070-01-31"));
+export const tracceCorrenti: TracciaCorrente[] = generaTracce(new Date("2070-01-01"),new Date("2070-01-02"));
 //10
 export const prenotazioni: Prenotazione[] = [
   {
@@ -471,4 +404,4 @@ export const acquisti: Acquisto[] = [
   },
 ];
 //16
-export const subtratte: Subtratta[] = generaSubtratte(new Date("2070-01-01"),new Date("2070-01-31"));
+export const subtratte: Subtratta[] = generaSubtratte(new Date("2070-01-01"),new Date("2070-01-02"));

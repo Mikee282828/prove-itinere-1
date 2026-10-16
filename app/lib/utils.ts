@@ -18,7 +18,7 @@ const modelloGiornaliero = [
   { stazione: "Castro Marino", arrivo: "12:10:00", partenza: "12:12:00"},
   { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00"},
   { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00"},
-  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: "13:15:00"},
+  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: null},
 ];
 
 const modelloGiornalieroRitorno = [
@@ -62,11 +62,12 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
         orario_arrivo: modello.arrivo,
         orario_partenza: modello.partenza,
         data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
-        treno: 1,
+        treno: 2,
       });
     });
   }
 
+  console.log(tutteLeTracce)
   return tutteLeTracce;
 }
 
@@ -83,6 +84,12 @@ export function generaTreno(dataInizio: Date, dataFine: Date): Treno[] {
   for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
     treni.push({
       codice: 1,
+      data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+      convoglio: 1,
+    });
+
+    treni.push({
+      codice: 2,
       data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
       convoglio: 1,
     });
@@ -107,6 +114,17 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
         inizio_occupazione: modelloGiornaliero[i].partenza,
         fine_occupazione: modelloGiornaliero[i+1].arrivo,
         codice_treno: 1,
+        data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
+      });
+    }
+
+    for (let i = 0; i < (modelloGiornalieroRitorno.length-1); i++) {
+      subtratte.push({
+        stazione_a: modelloGiornalieroRitorno[i].stazione as NomiStazioni,
+        stazione_b: modelloGiornalieroRitorno[i+1].stazione as NomiStazioni,
+        inizio_occupazione: modelloGiornalieroRitorno[i].partenza,
+        fine_occupazione: modelloGiornalieroRitorno[i+1].arrivo,
+        codice_treno: 2,
         data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
       });
     }
@@ -153,4 +171,15 @@ export function sommaMinuti(orario: string, minutiDaAggiungere: number | string)
   const ss = String(nuoviSecondi).padStart(2, "0");
 
   return `${hh}:${mm}:${ss}`;
+}
+
+function giornoPrecedente(data: string): string {
+  const risultato = new Date(`${data}T00:00:00.000Z`);
+
+  if (Number.isNaN(risultato.getTime())) {
+    throw new Error("Data non valida");
+  }
+
+  risultato.setUTCDate(risultato.getUTCDate() - 1);
+  return risultato.toISOString().slice(0, 10);
 }

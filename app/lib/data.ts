@@ -68,6 +68,104 @@ export type ConvoglioRaggruppato = {
   materiali: string[]; // l'array di stringhe (es: ['Cavour', 'B1'])
 };
 
+export async function fetchComposizioniDisponibili(
+  data: string,
+  orario: string,
+  stazione: string,
+): Promise<ConvoglioRaggruppato[]> {
+  if (stazione === "Torre Spaventa") {
+    try {
+      const composizioni = await sql`
+    WITH tracce_unite AS (
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_passata
+    UNION ALL
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_corrente
+    ),
+    dati_completi AS (
+    SELECT 
+        treno.convoglio,
+        tr.stazione,
+        tr.data,
+        tr.orario_arrivo AS arrivo,
+        -- Assegna 1 alla riga con data più recente e arrivo più tardivo
+        ROW_NUMBER() OVER (
+            PARTITION BY treno.convoglio
+            ORDER BY tr.data DESC, tr.orario_arrivo DESC
+        ) AS rn
+    FROM treno
+    JOIN tracce_unite AS tr
+      ON tr.data = treno.data 
+     AND tr.treno = treno.codice
+    WHERE tr.data <= ${data}
+      AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      AND tr.orario_arrivo IS NOT NULL
+      AND tr.orario_partenza IS NULL
+    ),
+    convogliDisponibili AS(
+    SELECT id FROM convoglio 
+    WHERE id NOT IN (
+    SELECT convoglio
+    FROM dati_completi
+    WHERE rn = 1 AND (stazione <> ${stazione} OR (stazione=${stazione} AND arrivo>${orario})))
+    )
+    SELECT convoglio,json_agg(id_mat) FROM composizione
+    WHERE convoglio IN (SELECT id FROM convogliDisponibili)
+    GROUP BY convoglio
+    `;
+      return composizioni as ConvoglioRaggruppato[];
+    } catch (error) {
+      console.error("Database Error:", error);
+      throw new Error("Failed to fetch data.");
+    }
+  } else {
+    try {
+      const composizioni = await sql`
+    WITH tracce_unite AS (
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_passata
+    UNION ALL
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_corrente
+    ),
+    dati_completi AS (
+    SELECT 
+        treno.convoglio,
+        tr.stazione,
+        tr.data,
+        tr.orario_arrivo AS arrivo,
+        -- Assegna 1 alla riga con data più recente e arrivo più tardivo
+        ROW_NUMBER() OVER (
+            PARTITION BY treno.convoglio
+            ORDER BY tr.data DESC, tr.orario_arrivo DESC
+        ) AS rn
+    FROM treno
+    JOIN tracce_unite AS tr
+      ON tr.data = treno.data 
+     AND tr.treno = treno.codice
+    WHERE tr.data <= ${data}
+      AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      AND tr.orario_arrivo IS NOT NULL
+      AND tr.orario_partenza IS NULL
+    ),
+    convogliDisponibili AS(
+    SELECT convoglio AS id
+    FROM dati_completi
+    WHERE rn = 1 AND (stazione=${stazione} AND arrivo<=${orario})
+    )
+    SELECT convoglio,json_agg(id_mat) FROM composizione
+    WHERE convoglio IN (SELECT id FROM convogliDisponibili)
+    GROUP BY convoglio
+    `;
+      return composizioni as ConvoglioRaggruppato[];
+    } catch (error) {
+      console.error("Database Error:", error);
+      throw new Error("Failed to fetch data.");
+    }
+  }
+}
+
 export async function fetchComposizioni(): Promise<ConvoglioRaggruppato[]> {
   try {
     const composizioni = await sql`
@@ -131,4 +229,7 @@ export async function fetchTreno(
     console.error("Database Error:", error);
     throw new Error("Failed to fetch data.");
   }
+}
+function giornoPrecedente(data: string) {
+  throw new Error("Function not implemented.");
 }

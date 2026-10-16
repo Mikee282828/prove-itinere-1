@@ -9,6 +9,7 @@ export default function Search() {
   const searchParams = useSearchParams(); // Allows you to access the parameters of the current URL
   const pathname = usePathname(); // Allows you to access the path
   const { replace } = useRouter(); //  Enables navigation between routes within client components programmatically
+  const dataTreno = searchParams.get("dataTreno");
   const data = useRef<HTMLInputElement>(null);
   const [errore, setErrore] = useState("");
 
@@ -48,7 +49,15 @@ export default function Search() {
           Cerca
         </Button>
         <Button className="">
-          <Link href="/esercizio/crea-corsa">Crea Corsa</Link>
+          <Link
+            href={
+              dataTreno
+                ? `/esercizio/crea-corsa?dataTreno=${encodeURIComponent(dataTreno)}`
+                : "/esercizio/crea-corsa"
+            }
+          >
+            Crea Corsa
+          </Link>
         </Button>
       </div>
       <div className="text-red-500">{errore}</div>

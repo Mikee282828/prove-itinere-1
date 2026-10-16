@@ -4,14 +4,14 @@ import { Button } from "../button";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
 import { DaUnoAVenti, Stazione } from "@/app/lib/definitions";
 import { createCorsa, StateCorsa } from "@/app/lib/actions";
-import { useActionState } from "react";
-import { sommaMinuti } from "@/app/lib/utils";
+import { useActionState, useRef, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 export default function Form({
   convogli,
   stazioni,
 }: {
-  convogli: ConvoglioRaggruppato[];
+  convogli: ConvoglioRaggruppato[] | null;
   stazioni: Stazione[];
 }) {
   const initialState: StateCorsa = { message: null, errors: {} };
@@ -20,6 +20,39 @@ export default function Form({
     { length: 20 },
     (_, i) => i + 1,
   ) as DaUnoAVenti[];
+
+  const inData = useRef<HTMLInputElement>(null);
+  const inCodice = useRef<HTMLSelectElement>(null);
+  const inOrario = useRef<HTMLInputElement>(null);
+  const inStazione = useRef<HTMLSelectElement>(null);
+
+  const searchParams = useSearchParams(); // Allows you to access the parameters of the current URL
+  const pathname = usePathname(); // Allows you to access the path
+  const { replace } = useRouter(); //  Enables navigation between routes within client components programmatically
+
+  const params = new URLSearchParams(searchParams); // URLSearchParams is a Web API that provides utility methods for manipulating the URL query parameters.
+
+  // stringa d'errore da mostrare
+  const [errore, setErrore] = useState("");
+
+  // funzione che si triggera quando si preme il pulsante di ricerca convogli
+  function handleSearch() {
+    const data = inData.current?.value || "";
+    const orario = inOrario.current?.value || "";
+    const stazione = inStazione.current?.value || "";
+
+    if (data && orario && stazione) {
+      params.set("data", data);
+      params.set("orario", orario);
+      params.set("stazione", stazione);
+      setErrore("");
+      replace(`${pathname}?${params.toString()}`)
+    } else {
+      setErrore("Attenzione! Immettere tutti i campi necessari per la ricerca dei convogli disponibili.");
+      replace(`${pathname}`);
+    }
+  }
+
   return (
     <form className="flex-1 p-8" action={formAction}>
       {state.message && (
@@ -29,8 +62,9 @@ export default function Form({
       )}
       <div className="space-y-12">
         <div className="border-b border-gray-900/10 pb-12">
-          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6">
-            <div className="sm:col-span-2">
+          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-8">
+            {/* Input data treno */}
+            <div className="sm:col-span-2 col-span-8">
               <label
                 htmlFor="data"
                 className="block text-sm/6 font-medium text-gray-900"
@@ -44,7 +78,8 @@ export default function Form({
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                   required
-                  defaultValue={state.enteredFormData?.data || "2070-01-01"}
+                  defaultValue={state.enteredFormData?.data || ""}
+                  ref={inData}
                 />
               </div>
               <div>
@@ -57,7 +92,8 @@ export default function Form({
               </div>
             </div>
 
-            <div className="sm:col-span-2">
+            {/* Input Codice Treno */}
+            <div className="sm:col-span-2 col-span-8">
               <label
                 htmlFor="codiceTreno"
                 className="block text-sm/6 font-medium text-gray-900"
@@ -71,6 +107,7 @@ export default function Form({
                   key={state.enteredFormData?.codiceTreno}
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
                   defaultValue={state.enteredFormData?.codiceTreno || "1"}
+                  ref={inCodice}
                 >
                   {codiciTreni.map((codici) => {
                     return <option key={codici}>{codici}</option>;
@@ -90,34 +127,67 @@ export default function Form({
                 </div>
               </div>
             </div>
-            <div className="sm:col-span-2">
+
+            {/* Input Orario treno */}
+            <div className="sm:col-span-2 col-span-8">
               <label
-                htmlFor="convoglio"
+                htmlFor="orario"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                Convoglio
+                Orario treno
+              </label>
+              <div className="mt-2">
+                <input
+                  id="orario"
+                  name="orario"
+                  type="time"
+                  className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  required
+                  defaultValue={state.enteredFormData?.orario || "2070-01-01"}
+                  ref={inOrario}
+                />
+              </div>
+              <div>
+                {state.errors?.orario &&
+                  state.errors.orario.map((error: string) => (
+                    <p className="mt-2 text-sm text-red-500" key={error}>
+                      {error}
+                    </p>
+                  ))}
+              </div>
+            </div>
+
+            {/* Input Stazione  */}
+            <div className="sm:col-span-2 col-span-8">
+              <label
+                htmlFor="stazione"
+                className="block text-sm/6 font-medium text-gray-900"
+              >
+                stazione
               </label>
               <div className="mt-2 grid grid-cols-1">
                 <select
-                  id="convoglio"
-                  name="convoglio"
+                  id="stazione"
+                  name="stazione"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.convoglio}
-                  key={state.enteredFormData?.convoglio || "default"}
+                  defaultValue={state.enteredFormData?.stazione || "default"}
+                  key={state.enteredFormData?.stazione || "default"}
+                  ref={inStazione}
                 >
-                  {convogli.map((convoglio) => (
-                    <option key={convoglio.convoglio}>
-                      {convoglio.convoglio}
-                    </option>
-                  ))}
+                  <option value="Torre Spaventa">
+                    Torre Spaventa
+                  </option>
+                  <option value="Villa San Felice">
+                    Villa San Felice
+                  </option>
                 </select>
                 <ChevronDownIcon
                   aria-hidden="true"
                   className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
                 />
                 <div>
-                  {state.errors?.convoglio &&
-                    state.errors.convoglio.map((error: string) => (
+                  {state.errors?.stazione &&
+                    state.errors.stazione.map((error: string) => (
                       <p className="mt-2 text-sm text-red-500" key={error}>
                         {error}
                       </p>
@@ -125,116 +195,43 @@ export default function Form({
                 </div>
               </div>
             </div>
-
-            {/* Tracce */}
-            {/* Torre Spaventa : andata */}
-            {stazioni.map((stazione, index) => (
-              <div
-                key={`${stazione}${index}`}
-                className="col-span-6 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-6"
-              >
-                {stazione.nome !== "Villa San Felice" ? (
-                  <div className="sm:col-span-3">
-                    <label
-                      htmlFor={`andata${index + 1}`}
-                      className="block text-sm/6 font-medium text-gray-900"
-                    >
-                      Partenza da: <strong>{stazione.nome}</strong>{" "}
-                      {parseFloat(String(stazione.km)).toFixed(2)} Km
-                    </label>
-                    <div className="grid grid-cols-1">
-                      <input
-                        id={`andata${index + 1}`}
-                        name={`andata${index + 1}`}
-                        type="time"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                        required
-                        defaultValue={
-                          state.enteredFormData?.[
-                            `andata${index + 1}` as keyof typeof state.enteredFormData
-                          ] || sommaMinuti("06:00",index*30)
-                        }
-                      />
-                      <div>
-                        {state.errors?.[`andata${index + 1}`] &&
-                          state.errors?.[`andata${index + 1}`]?.map(
-                            (error: string) => (
-                              <p
-                                className="mt-2 text-sm text-red-500"
-                                key={error}
-                              >
-                                {error}
-                              </p>
-                            ),
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="sm:col-span-3"></div>
-                )}
-
-                {stazione.nome !== "Torre Spaventa" && (
-                  <div className="sm:col-span-3">
-                    <label
-                      htmlFor={`ritorno${index + 1}`}
-                      className="block text-sm/6 font-medium text-gray-900"
-                    >
-                      Ritorno da: <strong>{stazione.nome}</strong>{" "}
-                      {parseFloat(String(stazione.km)).toFixed(2)} Km
-                    </label>
-                    <div className="grid grid-cols-1">
-                      <input
-                        id={`ritorno${index + 1}`}
-                        name={`ritorno${index + 1}`}
-                        type="time"
-                        className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                        required
-                        defaultValue={
-                          state.enteredFormData?.[
-                            `ritorno${index + 1}` as keyof typeof state.enteredFormData
-                          ] || sommaMinuti("15:00",-index*30)
-                        }
-                      />
-                      <div>
-                        {state.errors?.[`ritorno${index + 1}`] &&
-                          state.errors?.[`ritorno${index + 1}`]?.map(
-                            (error: string) => (
-                              <p
-                                className="mt-2 text-sm text-red-500"
-                                key={error}
-                              >
-                                {error}
-                              </p>
-                            ),
-                          )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
           </div>
+        </div>
+        <div className=" text-2xl text-red-400">
+          {convogli?.map((convoglio) => { return (<div key={convoglio.convoglio}> {convoglio.convoglio} </div>) })}
         </div>
       </div>
 
       <div className="mt-6 flex items-center justify-end gap-x-6">
-        <Button type="reset" className="text-sm/6 font-semibold text-gray-900">
-          Cancella
-        </Button>
+        <div className="flex gap-x-6">
+          <Button type="reset" className="text-sm/6 font-semibold text-gray-900 disabled:bg-gray-300" disabled>
+            Cancella
+          </Button>
+          <Button
+            type="submit"
+            className="disabled:bg-gray-300  rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            disabled
+          >
+            Crea
+          </Button>
+        </div>
+
         <Button
-          type="submit"
+          type="button"
           className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          onClick={(e) => {
+            handleSearch();
+          }}
         >
-          Crea
+          Cerca
         </Button>
       </div>
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
-
         </div>
       )}
+      <div className="text-red-500">{errore}</div>
     </form>
   );
 }
