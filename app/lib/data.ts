@@ -73,6 +73,8 @@ export async function fetchComposizioniDisponibili(
   orario: string,
   stazione: string,
 ): Promise<ConvoglioRaggruppato[]> {
+  // I convogli non ancora usati si trovano a Torre Spaventa quindi 
+  // viene fatto il complementare dei convogli non disponibili
   if (stazione === "Torre Spaventa") {
     try {
       const composizioni = await sql`
@@ -119,7 +121,9 @@ export async function fetchComposizioniDisponibili(
       console.error("Database Error:", error);
       throw new Error("Failed to fetch data.");
     }
-  } else {
+  }
+  // Senza complementare poiché si è assunto che stazione iniziale : Torre Spaventa
+  else {
     try {
       const composizioni = await sql`
     WITH tracce_unite AS (
