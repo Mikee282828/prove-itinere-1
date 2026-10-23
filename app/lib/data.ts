@@ -114,9 +114,10 @@ export async function fetchComposizioniDisponibili(
     FROM dati_completi
     WHERE rn = 1 AND (stazione <> ${stazione} OR (stazione=${stazione} AND arrivo>${orario})))
     )
-    SELECT convoglio,json_agg(id_mat) FROM composizione
+    SELECT convoglio,json_agg(id_mat) as materiali FROM composizione
     WHERE convoglio IN (SELECT id FROM convogliDisponibili)
     GROUP BY convoglio
+    ORDER BY convoglio
     `;
       return composizioni as ConvoglioRaggruppato[];
     } catch (error) {
@@ -161,9 +162,10 @@ export async function fetchComposizioniDisponibili(
     FROM dati_completi
     WHERE rn = 1 AND (stazione=${stazione} AND arrivo<=${orario})
     )
-    SELECT convoglio,json_agg(id_mat) FROM composizione
+    SELECT convoglio,json_agg(id_mat) as materiali FROM composizione
     WHERE convoglio IN (SELECT id FROM convogliDisponibili)
     GROUP BY convoglio
+    ORDER BY convoglio
     `;
       return composizioni as ConvoglioRaggruppato[];
     } catch (error) {

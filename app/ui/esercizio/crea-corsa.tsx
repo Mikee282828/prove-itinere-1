@@ -6,6 +6,8 @@ import { DaUnoAVenti, Stazione } from "@/app/lib/definitions";
 import { createCorsa, StateCorsa } from "@/app/lib/actions";
 import { useActionState, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { Card, CardContent, CardHeader, CardTitle } from "../card";
+import { TrainIcon } from "lucide-react";
 
 export default function Form({
   convogli,
@@ -34,9 +36,13 @@ export default function Form({
 
   // stringa d'errore da mostrare
   const [errore, setErrore] = useState("");
+  const [convoglioSelezionato, setConvoglioSelezionato] = useState<
+    string | null
+  >(null);
 
   // funzione che si triggera quando si preme il pulsante di ricerca convogli
   function handleSearch() {
+    setConvoglioSelezionato(null);
     const data = inData.current?.value || "";
     const orario = inOrario.current?.value || "";
     const stazione = inStazione.current?.value || "";
@@ -52,14 +58,19 @@ export default function Form({
       replace(`${pathname}`);
     }
   }
-
   return (
-    <form className="flex-1 p-8" action={formAction}>
+    <form
+      className="flex-1 p-8"
+      action={formAction}
+      onReset={() => setConvoglioSelezionato(null)}
+    >
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
         </div>
       )}
+
+      {/* Input form */}
       <div className="space-y-12">
         <div className="border-b border-gray-900/10 pb-12">
           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-8">
@@ -173,6 +184,7 @@ export default function Form({
                   defaultValue={state.enteredFormData?.stazione || "default"}
                   key={state.enteredFormData?.stazione || "default"}
                   ref={inStazione}
+                  required
                 >
                   <option value="Torre Spaventa">
                     Torre Spaventa
@@ -197,20 +209,58 @@ export default function Form({
             </div>
           </div>
         </div>
-        <div className=" text-2xl text-red-400">
-          {convogli?.map((convoglio) => { return (<div key={convoglio.convoglio}> {convoglio.convoglio} </div>) })}
+
+        {/* Convogli */}
+        <div className="grid gap-6">
+          {convogli?.map((element, index) => (
+            <Card key={index}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <TrainIcon className="h-5 w-5 text-primary" />
+                    Convoglio: {element.convoglio}
+                  </CardTitle>
+                  <input
+                    type="radio"
+                    name="convoglio"
+                    value={element.convoglio}
+                    checked={convoglioSelezionato === element.convoglio}
+                    onChange={() => setConvoglioSelezionato(element.convoglio)}
+                    required
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                  {element?.materiali?.map((materiale, index) => {
+                    return (
+                      <div
+                        key={`${materiale}-${index}`}
+                        className="shrink-0 px-4 py-3 rounded-lg border-2 bg-amber-50"
+                      >
+                        <p className="font-medium text-sm">
+                          {materiale}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
         </div>
       </div>
 
+      {/* Bottoni */}
       <div className="mt-6 flex items-center justify-end gap-x-6">
         <div className="flex gap-x-6">
-          <Button type="reset" className="text-sm/6 font-semibold text-gray-900 disabled:bg-gray-300" disabled>
+          <Button type="reset" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300">
             Cancella
           </Button>
           <Button
             type="submit"
             className="disabled:bg-gray-300  rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            disabled
+            disabled={!convoglioSelezionato}
           >
             Crea
           </Button>
@@ -218,7 +268,7 @@ export default function Form({
 
         <Button
           type="button"
-          className="rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+          className="rounded-md px-3 py-2 text-sm font-semibold shadow-xs focus-visible:outline-2 focus-visible:outline-offset-2"
           onClick={(e) => {
             handleSearch();
           }}
@@ -226,6 +276,8 @@ export default function Form({
           Cerca
         </Button>
       </div>
+
+      {/* Errori */}
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
