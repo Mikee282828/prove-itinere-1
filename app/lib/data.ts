@@ -102,6 +102,8 @@ export async function fetchComposizioniDisponibili(
      AND tr.treno = treno.codice
     WHERE tr.data <= ${data}
       AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      -- aggiunta di 'arrivo <= orario' qui permette di non escludere treni dello stesso giorno con un arrivo ultimo posteriore all'arrivo scelto
+      AND tr.orario_arrivo <= ${orario}
       AND tr.orario_arrivo IS NOT NULL
       AND tr.orario_partenza IS NULL
     ),
@@ -150,6 +152,7 @@ export async function fetchComposizioniDisponibili(
      AND tr.treno = treno.codice
     WHERE tr.data <= ${data}
       AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      AND tr.orario_arrivo <= ${orario}
       AND tr.orario_arrivo IS NOT NULL
       AND tr.orario_partenza IS NULL
     ),
