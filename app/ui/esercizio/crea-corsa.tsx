@@ -88,8 +88,7 @@ export default function Form({
                   name="data"
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  required
-                  defaultValue={state.enteredFormData?.data || ""}
+                  defaultValue={state.enteredFormData?.data || inData.current?.value || ""}
                   ref={inData}
                 />
               </div>
@@ -117,7 +116,7 @@ export default function Form({
                   name="codiceTreno"
                   key={state.enteredFormData?.codiceTreno}
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.codiceTreno || "1"}
+                  defaultValue={state.enteredFormData?.codiceTreno || inCodice.current?.value || "1"}
                   ref={inCodice}
                 >
                   {codiciTreni.map((codici) => {
@@ -153,8 +152,7 @@ export default function Form({
                   name="orario"
                   type="time"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  required
-                  defaultValue={state.enteredFormData?.orario || "2070-01-01"}
+                  defaultValue={state.enteredFormData?.orario || inOrario.current?.value}
                   ref={inOrario}
                 />
               </div>
@@ -181,10 +179,10 @@ export default function Form({
                   id="stazione"
                   name="stazione"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.stazione || "default"}
+                  defaultValue={state.enteredFormData?.stazione || inStazione.current?.value ||"default"}
+                  value={inStazione.current?.value}
                   key={state.enteredFormData?.stazione || "default"}
                   ref={inStazione}
-                  required
                 >
                   <option value="Torre Spaventa">
                     Torre Spaventa

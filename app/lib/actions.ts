@@ -136,24 +136,8 @@ const corsaSchema = z.object({
     .number("Inserire un numero convoglio valido!")
     .int()
     .min(1),
-  andata1: z.iso.time("Formattazione orario non valida!"),
-  andata2: z.iso.time("Formattazione orario non valida!"),
-  andata3: z.iso.time("Formattazione orario non valida!"),
-  andata4: z.iso.time("Formattazione orario non valida!"),
-  andata5: z.iso.time("Formattazione orario non valida!"),
-  andata6: z.iso.time("Formattazione orario non valida!"),
-  andata7: z.iso.time("Formattazione orario non valida!"),
-  andata8: z.iso.time("Formattazione orario non valida!"),
-  andata9: z.iso.time("Formattazione orario non valida!"),
-  ritorno2: z.iso.time("Formattazione orario non valida!"),
-  ritorno3: z.iso.time("Formattazione orario non valida!"),
-  ritorno4: z.iso.time("Formattazione orario non valida!"),
-  ritorno5: z.iso.time("Formattazione orario non valida!"),
-  ritorno6: z.iso.time("Formattazione orario non valida!"),
-  ritorno7: z.iso.time("Formattazione orario non valida!"),
-  ritorno8: z.iso.time("Formattazione orario non valida!"),
-  ritorno9: z.iso.time("Formattazione orario non valida!"),
-  ritorno10: z.iso.time("Formattazione orario non valida!"),
+  orario: z.iso.time("Inserire un orario valido!"),
+  stazione: z.literal(["Torre Spaventa", "Villa San Felice"]),
 });
 
 export type StateCorsa = {
@@ -161,14 +145,16 @@ export type StateCorsa = {
     data?: string[];
     codiceTreno?: string[];
     convoglio?: string[];
-    [key: string]: string[] | undefined;
+    orario?: string[];
+    stazione?: string[];
   };
   message?: string | null;
   enteredFormData?: {
     data?: string;
     codiceTreno?: string;
     convoglio?: string;
-    [key: string]: string | undefined;
+    orario?: string;
+    stazione?: string;
   };
 };
 
@@ -180,49 +166,18 @@ export async function createCorsa(
   const validatedFields = corsaSchema.safeParse({
     data: formData.get("data"),
     codiceTreno: formData.get("codiceTreno"),
+    orario: formData.get("orario"),
+    stazione: formData.get("stazione"),
     convoglio: formData.get("convoglio"),
-    andata1: formData.get("andata1"),
-    andata2: formData.get("andata2"),
-    andata3: formData.get("andata3"),
-    andata4: formData.get("andata4"),
-    andata5: formData.get("andata5"),
-    andata6: formData.get("andata6"),
-    andata7: formData.get("andata7"),
-    andata8: formData.get("andata8"),
-    andata9: formData.get("andata9"),
-    ritorno2: formData.get("ritorno2"),
-    ritorno3: formData.get("ritorno3"),
-    ritorno4: formData.get("ritorno4"),
-    ritorno5: formData.get("ritorno5"),
-    ritorno6: formData.get("ritorno6"),
-    ritorno7: formData.get("ritorno7"),
-    ritorno8: formData.get("ritorno8"),
-    ritorno9: formData.get("ritorno9"),
-    ritorno10: formData.get("ritorno10"),
   });
+
+  console.log("data" + formData.get("data"),"codice" + formData.get("codiceTreno"),"orario"+formData.get("orario"),"stazione"+formData.get("stazione"),"convoglio"+formData.get("convoglio"))
+  return 0
 
   const rawData = {
     data: formData.get("data") as string,
     codiceTreno: formData.get("codiceTreno") as string,
     convoglio: formData.get("convoglio") as string,
-    andata1: formData.get("andata1") as string,
-    andata2: formData.get("andata2") as string,
-    andata3: formData.get("andata3") as string,
-    andata4: formData.get("andata4") as string,
-    andata5: formData.get("andata5") as string,
-    andata6: formData.get("andata6") as string,
-    andata7: formData.get("andata7") as string,
-    andata8: formData.get("andata8") as string,
-    andata9: formData.get("andata9") as string,
-    ritorno2: formData.get("ritorno2") as string,
-    ritorno3: formData.get("ritorno3") as string,
-    ritorno4: formData.get("ritorno4") as string,
-    ritorno5: formData.get("ritorno5") as string,
-    ritorno6: formData.get("ritorno6") as string,
-    ritorno7: formData.get("ritorno7") as string,
-    ritorno8: formData.get("ritorno8") as string,
-    ritorno9: formData.get("ritorno9") as string,
-    ritorno10: formData.get("ritorno10") as string,
   };
 
   //uscita anticipata in caso di errori di validazione
