@@ -171,7 +171,7 @@ export async function createCorsa(
     convoglio: formData.get("convoglio"),
   });
 
-  console.log("data" + formData.get("data"),"codice" + formData.get("codiceTreno"),"orario"+formData.get("orario"),"stazione"+formData.get("stazione"),"convoglio"+formData.get("convoglio"))
+  console.log("data " + formData.get("data"),"codice " + formData.get("codiceTreno"),"orario "+formData.get("orario"),"stazione "+formData.get("stazione"),"convoglio "+formData.get("convoglio"))
   return 0
 
   const rawData = {

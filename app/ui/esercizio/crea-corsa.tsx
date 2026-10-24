@@ -46,11 +46,13 @@ export default function Form({
     const data = inData.current?.value || "";
     const orario = inOrario.current?.value || "";
     const stazione = inStazione.current?.value || "";
+    const codiceTreno = inCodice.current?.value || "";
 
-    if (data && orario && stazione) {
+    if (data && orario && stazione && codiceTreno) {
       params.set("data", data);
       params.set("orario", orario);
       params.set("stazione", stazione);
+      params.set("codiceTreno", codiceTreno);
       setErrore("");
       replace(`${pathname}?${params.toString()}`)
     } else {
@@ -58,6 +60,7 @@ export default function Form({
       replace(`${pathname}`);
     }
   }
+
   return (
     <form
       className="flex-1 p-8"
@@ -88,8 +91,9 @@ export default function Form({
                   name="data"
                   type="date"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.data || inData.current?.value || ""}
+                  defaultValue={state.enteredFormData?.data || searchParams.get("data") || ""}
                   ref={inData}
+                  disabled={searchParams.get("data") ? true : false}
                 />
               </div>
               <div>
@@ -116,17 +120,20 @@ export default function Form({
                   name="codiceTreno"
                   key={state.enteredFormData?.codiceTreno}
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.codiceTreno || inCodice.current?.value || "1"}
+                  defaultValue={state.enteredFormData?.codiceTreno || searchParams.get("codiceTreno") || "1"}
                   ref={inCodice}
+                  disabled={searchParams.get("codiceTreno") ? true : false}
                 >
                   {codiciTreni.map((codici) => {
                     return <option key={codici}>{codici}</option>;
                   })}
                 </select>
-                <ChevronDownIcon
-                  aria-hidden="true"
-                  className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
-                />
+                {!searchParams.get("codiceTreno") && (
+                  <ChevronDownIcon
+                    aria-hidden="true"
+                    className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
+                  />
+                )}
                 <div>
                   {state.errors?.codiceTreno &&
                     state.errors.codiceTreno.map((error: string) => (
@@ -152,8 +159,9 @@ export default function Form({
                   name="orario"
                   type="time"
                   className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.orario || inOrario.current?.value}
+                  defaultValue={state.enteredFormData?.orario || searchParams.get("orario") || ""}
                   ref={inOrario}
+                  disabled={searchParams.get("orario") ? true : false}
                 />
               </div>
               <div>
@@ -172,17 +180,17 @@ export default function Form({
                 htmlFor="stazione"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                stazione
+                Stazione
               </label>
               <div className="mt-2 grid grid-cols-1">
                 <select
                   id="stazione"
                   name="stazione"
                   className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
-                  defaultValue={state.enteredFormData?.stazione || inStazione.current?.value ||"default"}
-                  value={inStazione.current?.value}
-                  key={state.enteredFormData?.stazione || "default"}
+                  defaultValue={state.enteredFormData?.stazione || searchParams.get("stazione") || "Torre Spaventa"}
+                  key={state.enteredFormData?.stazione}
                   ref={inStazione}
+                  disabled={searchParams.get("stazione") ? true : false}
                 >
                   <option value="Torre Spaventa">
                     Torre Spaventa
@@ -191,10 +199,12 @@ export default function Form({
                     Villa San Felice
                   </option>
                 </select>
-                <ChevronDownIcon
-                  aria-hidden="true"
-                  className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
-                />
+                {!searchParams.get("stazione") && (
+                  <ChevronDownIcon
+                    aria-hidden="true"
+                    className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
+                  />
+                )}
                 <div>
                   {state.errors?.stazione &&
                     state.errors.stazione.map((error: string) => (
