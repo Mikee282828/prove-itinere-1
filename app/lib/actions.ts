@@ -4,7 +4,7 @@ import { neon } from "@neondatabase/serverless";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import z from "zod";
-import { fetchStazioni } from "./data";
+import { fetchComposizioniDisponibili, fetchStazioni } from "./data";
 import { sommaMinuti } from "./utils";
 import { Treno } from "./definitions";
 
@@ -126,7 +126,7 @@ export async function deleteConvoglio(id: string) {
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 const corsaSchema = z.object({
-  data: z.coerce.date("Inserire la data!"),
+  data: z.iso.date("Inserire la data!"),
   codiceTreno: z.coerce
     .number("Inserire un numero compreso tra 1 e 20")
     .int()
@@ -172,12 +172,13 @@ export async function createCorsa(
   });
 
   console.log("data " + formData.get("data"),"codice " + formData.get("codiceTreno"),"orario "+formData.get("orario"),"stazione "+formData.get("stazione"),"convoglio "+formData.get("convoglio"))
-  return 0
 
   const rawData = {
     data: formData.get("data") as string,
     codiceTreno: formData.get("codiceTreno") as string,
     convoglio: formData.get("convoglio") as string,
+    stazione: formData.get("stazione") as string,
+    orario: formData.get("orario") as string,
   };
 
   //uscita anticipata in caso di errori di validazione
@@ -190,6 +191,33 @@ export async function createCorsa(
   }
 
   const dati = validatedFields.data;
+
+  //#daFare 
+  // - se il convoglio è effetivamente disponibile
+  // - se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
+  // - se il convoglio è disponibile e senza vincoli allora crealo
+
+  //Controllo se il convoglio è effettivamente disponibile
+  try{
+    const convogliDisponibili = await fetchComposizioniDisponibili(dati.data, dati.orario, dati.stazione);
+    if (convogliDisponibili.some((convoglio) => convoglio.convoglio === String(dati.convoglio))){
+    }else{
+      throw Error;
+    }
+  }catch (error) {
+    console.error(error);
+    return {
+      message: "Errore. Il convoglio non è disponibile nel lasso di tempo selezionato",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  return {
+      message: "Per ora funziona, ma l'inserimento è ancora da implementare",
+      errors: {},
+      enteredFormData: rawData,
+  };
 
   try {
     // controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare

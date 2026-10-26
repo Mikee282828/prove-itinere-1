@@ -8,13 +8,12 @@ import { useActionState, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { TrainIcon } from "lucide-react";
+import { cn } from "@/app/lib/utils";
 
 export default function Form({
   convogli,
-  stazioni,
 }: {
   convogli: ConvoglioRaggruppato[] | null;
-  stazioni: Stazione[];
 }) {
   const initialState: StateCorsa = { message: null, errors: {} };
   const [state, formAction] = useActionState(createCorsa, initialState);
@@ -83,17 +82,19 @@ export default function Form({
                 htmlFor="data"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                Data treno
+                Data treno<span className="text-red-400">*</span>
               </label>
               <div className="mt-2">
                 <input
                   id="data"
                   name="data"
                   type="date"
-                  className="disabled:text-gray-300 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  className={cn("block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
+                    searchParams.get("data") && "text-gray-300"
+                  )}
                   defaultValue={state.enteredFormData?.data || searchParams.get("data") || ""}
                   ref={inData}
-                  disabled={searchParams.get("data") ? true : false}
+                  readOnly={searchParams.get("data") ? true : false}
                 />
               </div>
               <div>
@@ -112,14 +113,16 @@ export default function Form({
                 htmlFor="codiceTreno"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                Codice treno
+                Codice treno<span className="text-red-400">*</span>
               </label>
               <div className="mt-2 grid grid-cols-1">
                 <select
                   id="codiceTreno"
                   name="codiceTreno"
                   key={state.enteredFormData?.codiceTreno}
-                  className="disabled:text-gray-300 col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  className={cn("col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
+                    searchParams.get("codiceTreno") && "text-gray-300"
+                  )}
                   defaultValue={state.enteredFormData?.codiceTreno || searchParams.get("codiceTreno") || "1"}
                   ref={inCodice}
                   disabled={searchParams.get("codiceTreno") ? true : false}
@@ -128,6 +131,7 @@ export default function Form({
                     return <option key={codici}>{codici}</option>;
                   })}
                 </select>
+                <input type="hidden" name="codiceTreno" value={searchParams.get("codiceTreno") || ""} />
                 {!searchParams.get("codiceTreno") && (
                   <ChevronDownIcon
                     aria-hidden="true"
@@ -151,17 +155,19 @@ export default function Form({
                 htmlFor="orario"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                Orario treno
+                Orario treno<span className="text-red-400">*</span>
               </label>
               <div className="mt-2">
                 <input
                   id="orario"
                   name="orario"
                   type="time"
-                  className="disabled:text-gray-300 block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  className={cn("block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
+                    searchParams.get("orario") && "text-gray-300"
+                  )}
                   defaultValue={state.enteredFormData?.orario || searchParams.get("orario") || ""}
                   ref={inOrario}
-                  disabled={searchParams.get("orario") ? true : false}
+                  readOnly={searchParams.get("orario") ? true : false}
                 />
               </div>
               <div>
@@ -180,13 +186,15 @@ export default function Form({
                 htmlFor="stazione"
                 className="block text-sm/6 font-medium text-gray-900"
               >
-                Stazione
+                Stazione<span className="text-red-400">*</span>
               </label>
               <div className="mt-2 grid grid-cols-1">
                 <select
                   id="stazione"
                   name="stazione"
-                  className="disabled:text-gray-300 col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                  className={cn("col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
+                    searchParams.get("stazione") && "text-gray-300"
+                  )}
                   defaultValue={state.enteredFormData?.stazione || searchParams.get("stazione") || "Torre Spaventa"}
                   key={state.enteredFormData?.stazione}
                   ref={inStazione}
@@ -199,6 +207,7 @@ export default function Form({
                     Villa San Felice
                   </option>
                 </select>
+                <input type="hidden" name="stazione" value={searchParams.get("stazione") || "Torre Spaventa"} />
                 {!searchParams.get("stazione") && (
                   <ChevronDownIcon
                     aria-hidden="true"

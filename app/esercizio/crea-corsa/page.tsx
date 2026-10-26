@@ -23,12 +23,10 @@ export default async function Page(props: {
       alert(e);
     }
   }
-  const stazioni: Stazione[] = await fetchStazioni();
   return (
     <main>
       <Form
         convogli={convogliDisponibili}
-        stazioni={stazioni}
       />
 
     </main>
