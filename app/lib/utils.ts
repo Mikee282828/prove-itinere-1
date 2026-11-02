@@ -183,3 +183,55 @@ function giornoPrecedente(data: string): string {
   risultato.setUTCDate(risultato.getUTCDate() - 1);
   return risultato.toISOString().slice(0, 10);
 }
+
+export function differenzaInMinuti(
+	date1: Date,
+	time1: string,
+	date2: Date,
+	time2: string,
+): number {
+  const toDate = (date: Date, time: string): Date => {
+    const timeParts = time.split(":").map(Number); // HH:mm or HH:mm:ss
+
+    if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
+      throw new Error("Invalid date.");
+    }
+    if (
+      (timeParts.length !== 2 && timeParts.length !== 3) ||
+      timeParts.some((part) => !Number.isInteger(part))
+    ) {
+      throw new Error("Use time format HH:mm or HH:mm:ss.");
+    }
+
+    const [hour, minute, second = 0] = timeParts;
+    if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
+      throw new Error("Invalid time.");
+    }
+
+    const result = new Date(
+      date.getFullYear(),
+      date.getMonth(),
+      date.getDate(),
+      hour,
+      minute,
+      second,
+    );
+
+		if (
+			!Number.isFinite(result.getTime()) ||
+			result.getHours() !== hour ||
+      result.getMinutes() !== minute ||
+      result.getSeconds() !== second
+		) {
+      throw new Error("Invalid local date or time.");
+		}
+
+		return result;
+	};
+
+	const start = toDate(date1, time1);
+	const end = toDate(date2, time2);
+	return (end.getTime() - start.getTime()) / 60_000;
+}
+
+

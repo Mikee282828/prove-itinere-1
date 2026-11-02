@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import z from "zod";
 import { fetchComposizioniDisponibili, fetchStazioni } from "./data";
-import { sommaMinuti } from "./utils";
+import { differenzaInMinuti, sommaMinuti } from "./utils";
 import { Treno } from "./definitions";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -158,6 +158,8 @@ export type StateCorsa = {
   };
 };
 
+//---------CREATE CORSA---------//
+
 export async function createCorsa(
   prevState: StateCorsa,
   formData: FormData,
@@ -171,8 +173,15 @@ export async function createCorsa(
     convoglio: formData.get("convoglio"),
   });
 
-  console.log("data " + formData.get("data"),"codice " + formData.get("codiceTreno"),"orario "+formData.get("orario"),"stazione "+formData.get("stazione"),"convoglio "+formData.get("convoglio"))
+  console.log(
+    "data " + formData.get("data"),
+    "codice " + formData.get("codiceTreno"),
+    "orario " + formData.get("orario"),
+    "stazione " + formData.get("stazione"),
+    "convoglio " + formData.get("convoglio"),
+  );
 
+  // Dati da restituire indietro nel caso di errori
   const rawData = {
     data: formData.get("data") as string,
     codiceTreno: formData.get("codiceTreno") as string,
@@ -181,7 +190,6 @@ export async function createCorsa(
     orario: formData.get("orario") as string,
   };
 
-  //uscita anticipata in caso di errori di validazione
   if (!validatedFields.success) {
     return {
       errors: validatedFields.error.flatten().fieldErrors,
@@ -192,33 +200,87 @@ export async function createCorsa(
 
   const dati = validatedFields.data;
 
-  //#daFare 
-  // - se il convoglio è effetivamente disponibile
+  //#daFare
+  // * se il convoglio è effetivamente disponibile
   // - se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
   // - se il convoglio è disponibile e senza vincoli allora crealo
 
   //Controllo se il convoglio è effettivamente disponibile
-  try{
-    const convogliDisponibili = await fetchComposizioniDisponibili(dati.data, dati.orario, dati.stazione);
-    if (convogliDisponibili.some((convoglio) => convoglio.convoglio === String(dati.convoglio))){
-    }else{
+  try {
+    const convogliDisponibili = await fetchComposizioniDisponibili(
+      dati.data,
+      dati.orario,
+      dati.stazione,
+    );
+    if (
+      convogliDisponibili.some(
+        (convoglio) => convoglio.convoglio === String(dati.convoglio),
+      )
+    ) {
+    } else {
       throw Error;
     }
-  }catch (error) {
+  } catch (error) {
     console.error(error);
     return {
-      message: "Errore. Il convoglio non è disponibile nel lasso di tempo selezionato",
+      message: "Il convoglio non è disponibile nel lasso di tempo selezionato",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  // Controllo se il convoglio ha bisogno di un ritorno obbligatorio o non è possibile utilizzarlo
+  try {
+    const trenoDopo = await sql`
+    WITH 
+    tracce_unite AS (
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_passata
+    UNION ALL
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_corrente
+   )
+   SELECT 
+      treno.convoglio,
+      tr.stazione,
+      tr.data,
+      tr.orario_partenza AS partenza
+    FROM treno
+    JOIN tracce_unite AS tr
+      ON tr.data = treno.data 
+     AND tr.treno = treno.codice
+    WHERE 
+      ((tr.data = ${dati.data} AND tr.orario_partenza >= ${dati.orario}) -- orario e data a scelta
+      OR tr.data > ${dati.data}) -- data a scelta
+      AND treno.convoglio = ${dati.convoglio}    -- convoglio a scelta
+      AND tr.stazione IN (${dati.stazione})    -- uno delle 2 stazioni terminali 
+      AND tr.orario_arrivo IS NULL
+      AND tr.orario_partenza IS NOT NULL
+    ORDER BY data,partenza ASC
+    LIMIT 1;
+    `;
+    // controlla se il primo treno con lo stesso convoglio e stazione dopo quello da creare,
+    // è abbastanza lontano temporalmente dal treno da creare
+    console.log("---------------------------------------------------------------")
+    console.log(trenoDopo);
+    if (trenoDopo){
+      const differenza = differenzaInMinuti(new Date(dati.data),dati.orario,trenoDopo[0].data,trenoDopo[0].partenza)
+      console.log(differenza)
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore. Si è verificato un errore nella verifica.",
       errors: {},
       enteredFormData: rawData,
     };
   }
 
   return {
-      message: "Per ora funziona, ma l'inserimento è ancora da implementare",
-      errors: {},
-      enteredFormData: rawData,
+    message: "Per ora funziona, ma l'inserimento è ancora da implementare",
+    errors: {},
+    enteredFormData: rawData,
   };
-
   try {
     // controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
     // se sì allora uscita anticipata

@@ -22,7 +22,7 @@ export async function GET() {
   try {
     // Creiamo un array che conterrà TUTTE le query da eseguire nella transazione
     const transactionQueries = [];
-
+    // attributo STATO aggiunto per indicare se bisogna creare il ritorno
     // 1. Tabelle di base (DDL) - Devono essere inserite nell'ordine corretto di foreign key
     transactionQueries.push(sql`CREATE TABLE IF NOT EXISTS convoglio (id BIGSERIAL PRIMARY KEY);`);
     transactionQueries.push(sql`
@@ -30,6 +30,7 @@ export async function GET() {
         data      DATE    NOT NULL,
         codice    INT     NOT NULL,
         convoglio BIGINT  NOT NULL,
+        stato     VARCHAR NOT NULL,
         PRIMARY KEY (codice, data),
         FOREIGN KEY (convoglio) REFERENCES convoglio(id)
       );
@@ -187,7 +188,7 @@ export async function GET() {
     });
     transactionQueries.push(sql`SELECT setval(pg_get_serial_sequence('convoglio', 'id'), COALESCE(MAX(id), 1)) FROM convoglio;`);
     treni.forEach((t) => {
-      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data) VALUES (${t.codice}, ${t.convoglio}, ${t.data}) ON CONFLICT (codice,data) DO NOTHING;`);
+      transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data, stato) VALUES (${t.codice}, ${t.convoglio}, ${t.data}, 'finalizzato') ON CONFLICT (codice,data) DO NOTHING;`);
     });
 
     stazioni.forEach((s) => {
