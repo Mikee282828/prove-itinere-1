@@ -137,7 +137,7 @@ const corsaSchema = z.object({
     .int()
     .min(1),
   orario: z.iso.time("Inserire un orario valido!"),
-  stazione: z.literal(["Torre Spaventa", "Villa San Felice"]),
+  stazione: z.enum(["Torre Spaventa", "Villa San Felice"]),
 });
 
 export type StateCorsa = {
@@ -201,11 +201,11 @@ export async function createCorsa(
   const dati = validatedFields.data;
 
   //#daFare
-  // * se il convoglio è effetivamente disponibile
-  // - se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
-  // - se il convoglio è disponibile e senza vincoli allora crealo
+  // * 1se il convoglio è effetivamente disponibile
+  // - 2se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
+  // - 3se il convoglio è disponibile e senza vincoli allora crealo
 
-  //Controllo se il convoglio è effettivamente disponibile
+  //1CONTROLLO se il convoglio è effettivamente disponibile
   try {
     const convogliDisponibili = await fetchComposizioniDisponibili(
       dati.data,
@@ -229,7 +229,17 @@ export async function createCorsa(
     };
   }
 
-  // Controllo se il convoglio ha bisogno di un ritorno obbligatorio o non è possibile utilizzarlo
+  // 2CONTROLLO se il convoglio ha bisogno di un ritorno obbligatorio o non è possibile utilizzarlo
+  const stazioni = await fetchStazioni();
+  async function distanzaStazioni(speed: number) : Promise<number[]>{
+    const tempi = [];
+    for (let i = 1; i < stazioni.length; i++) {
+      tempi.push((((stazioni[i].km - stazioni[i - 1].km) * 60) / speed));
+    }
+    console.log(tempi);
+    return tempi;
+  }
+
   try {
     const trenoDopo = await sql`
     WITH 
@@ -259,18 +269,78 @@ export async function createCorsa(
     ORDER BY data,partenza ASC
     LIMIT 1;
     `;
-    // controlla se il primo treno con lo stesso convoglio e stazione dopo quello da creare,
-    // è abbastanza lontano temporalmente dal treno da creare
-    console.log("---------------------------------------------------------------")
-    console.log(trenoDopo);
-    if (trenoDopo){
-      const differenza = differenzaInMinuti(new Date(dati.data),dati.orario,trenoDopo[0].data,trenoDopo[0].partenza)
-      console.log(differenza)
+    // controllo della disponibilità di tempo prima del primo treno successivo che ha le stesse condizioni di partenza
+    if (trenoDopo) {
+      // ** DA METTERE LA LOGICA DELLE SUBTRATTE LIBERE PER CALCOLARE IL TEMPO MINIMO NECESSARIO
+
+      const minutiPerSubtratta = await distanzaStazioni(50);
+
+      let subtrattaOccupata;
+      let orarioPartenza = dati.orario;
+
+      //**** */ PER ORA FUNZIONA MA SERVE AGGIUNGERE LOGICA DI STAZIONE INIZIALE ****
+      for(let i = 0; i<minutiPerSubtratta.length; i++){
+
+      // Controlla se la subtratta è occupata e se sì allora ritorna gli attributi della subtratta occupata
+       subtrattaOccupata = await sql`
+          SELECT * FROM subtratta 
+          WHERE 
+          -- Stazioni
+          ((stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i+1].nome}) 
+          OR (stazione_a = ${stazioni[i+1].nome} AND stazione_b = ${stazioni[i].nome}))
+          -- Data
+          AND data_treno >= ${dati.data}
+          -- Orari che si intersichino
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza,minutiPerSubtratta[i])})
+          ORDER BY data_treno,fine_occupazione
+          LIMIT 1;
+        `;
+
+        // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
+        console.log(subtrattaOccupata);
+        if(subtrattaOccupata.length>0){
+          orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+          i--;
+        }else{
+          orarioPartenza = sommaMinuti(orarioPartenza,minutiPerSubtratta[i]);
+        }
+        console.log("L'orario di partenza è : "+ orarioPartenza);
+      }
+
+      const differenza = differenzaInMinuti(
+        new Date(dati.data),
+        dati.orario,
+        trenoDopo[0].data,
+        trenoDopo[0].partenza,
+      );
     }
   } catch (error) {
     console.error(error);
     return {
       message: "Errore. Si è verificato un errore nella verifica.",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  // CREAZIONE CORSA
+  try {
+    // controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
+    // se sì allora uscita anticipata
+    const trenoPresente =
+      await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
+    if (trenoPresente.length !== 0)
+      return {
+        message:
+          "Errore. Impossibile creare un treno con lo stesso codice di un altro treno nello stesso giorno",
+        enteredFormData: rawData,
+      };
+    // prendi tutte le stazioni
+    const stazioni = await fetchStazioni();
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore nella creazione",
       errors: {},
       enteredFormData: rawData,
     };
