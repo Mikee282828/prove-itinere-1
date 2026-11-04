@@ -405,3 +405,4 @@ export const acquisti: Acquisto[] = [
 ];
 //16
 export const subtratte: Subtratta[] = generaSubtratte(new Date("2070-01-01"),new Date("2070-01-02"));
+

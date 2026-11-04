@@ -156,6 +156,7 @@ export type StateCorsa = {
     orario?: string;
     stazione?: string;
   };
+  ritornoObbligatorio?: boolean;
 };
 
 //---------CREATE CORSA---------//
@@ -229,17 +230,18 @@ export async function createCorsa(
     };
   }
 
-  // 2CONTROLLO se il convoglio ha bisogno di un ritorno obbligatorio o non è possibile utilizzarlo
   const stazioni = await fetchStazioni();
-  async function distanzaStazioni(speed: number) : Promise<number[]>{
+  async function distanzaStazioni(speed: number): Promise<number[]> {
     const tempi = [];
     for (let i = 1; i < stazioni.length; i++) {
-      tempi.push((((stazioni[i].km - stazioni[i - 1].km) * 60) / speed));
+      tempi.push(((stazioni[i].km - stazioni[i - 1].km) * 60) / speed);
     }
     console.log(tempi);
     return tempi;
   }
 
+  // 2CONTROLLO se il convoglio ha bisogno di un ritorno obbligatorio o se non è possibile utilizzarlo
+  // (ottimizzabile anticipando l'uscita nel caso ci sia overlap di subtratte con stessi convogli)
   try {
     const trenoDopo = await sql`
     WITH 
@@ -269,50 +271,190 @@ export async function createCorsa(
     ORDER BY data,partenza ASC
     LIMIT 1;
     `;
-    // controllo della disponibilità di tempo prima del primo treno successivo che ha le stesse condizioni di partenza
-    if (trenoDopo) {
-      // ** DA METTERE LA LOGICA DELLE SUBTRATTE LIBERE PER CALCOLARE IL TEMPO MINIMO NECESSARIO
-
+    // controllo della disponibilità di tempo prima del primo treno successivo che abbia gli stessi attributi:
+    // stazione partenza, convoglio
+    if (trenoDopo.length > 0) {
       const minutiPerSubtratta = await distanzaStazioni(50);
 
       let subtrattaOccupata;
       let orarioPartenza = dati.orario;
 
-      //**** */ PER ORA FUNZIONA MA SERVE AGGIUNGERE LOGICA DI STAZIONE INIZIALE ****
-      for(let i = 0; i<minutiPerSubtratta.length; i++){
+      // se Torre Spaventa => parti normalmente altrimenti inverti l'ordine delle stazioni
 
-      // Controlla se la subtratta è occupata e se sì allora ritorna gli attributi della subtratta occupata
-       subtrattaOccupata = await sql`
+      if (dati.stazione === "Villa San Felice") {
+        stazioni.reverse();
+      }
+
+      // CICLO SUBTRATTE ANDATA
+      console.log(
+        "-------Inizio ciclo per controllo delle subtratte in andata--------",
+      );
+      for (let i = 0; i < minutiPerSubtratta.length; i++) {
+        // Controlla se la subtratta è occupata
+        console.log(
+          "---------------------------------------------------------",
+        );
+        console.log("index = " + i);
+        console.log(`Subtratta: ${stazioni[i].nome} - ${stazioni[i + 1].nome}`);
+
+        subtrattaOccupata = await sql`
           SELECT * FROM subtratta 
           WHERE 
           -- Stazioni
-          ((stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i+1].nome}) 
-          OR (stazione_a = ${stazioni[i+1].nome} AND stazione_b = ${stazioni[i].nome}))
+          ((stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i + 1].nome}) 
+          OR (stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}))
           -- Data
           AND data_treno >= ${dati.data}
           -- Orari che si intersichino
-          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza,minutiPerSubtratta[i])})
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])})
           ORDER BY data_treno,fine_occupazione
           LIMIT 1;
         `;
 
         // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
-        console.log(subtrattaOccupata);
-        if(subtrattaOccupata.length>0){
+        if (subtrattaOccupata.length > 0) {
           orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+          console.log(
+            `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+          );
+          console.log(
+            "Data treno: " +
+              subtrattaOccupata[0].data_treno.getFullYear() +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getMonth() + 1).padStart(
+                2,
+                "0",
+              ) +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getDate()).padStart(
+                2,
+                "0",
+              ),
+          );
+          console.log("Codice treno: " + subtrattaOccupata[0].codice_treno);
           i--;
-        }else{
-          orarioPartenza = sommaMinuti(orarioPartenza,minutiPerSubtratta[i]);
+        } else {
+          console.log(
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])}`,
+          );
+          orarioPartenza = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
         }
-        console.log("L'orario di partenza è : "+ orarioPartenza);
       }
+      console.log(
+        "-------Fine ciclo per controllo delle subtratte in andata--------",
+      );
+
+      console.log(
+        "-----------------------------------------------------------------------------------------------------------",
+      );
+      // CICLO SUBTRATTE RITORNO
+      console.log(
+        "-------Inizio ciclo per controllo delle subtratte di ritorno--------",
+      );
+      for (let i = minutiPerSubtratta.length - 1; i >= 0; i--) {
+        // Controlla se la subtratta è occupata
+        console.log(
+          "---------------------------------------------------------",
+        );
+        console.log("index = " + i);
+        console.log(`Subtratta: ${stazioni[i + 1].nome} - ${stazioni[i].nome}`);
+
+        subtrattaOccupata = await sql`
+          SELECT * FROM subtratta 
+          WHERE 
+          -- Stazioni
+          ((stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}) 
+          OR (stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i + 1].nome}))
+          -- Data
+          AND data_treno >= ${dati.data}
+          -- Orari che si intersichino
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])})
+          ORDER BY data_treno,fine_occupazione
+          LIMIT 1;
+        `;
+
+        // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
+        if (subtrattaOccupata.length > 0) {
+          orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+          console.log(
+            `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+          );
+          console.log(
+            "Data treno: " +
+              subtrattaOccupata[0].data_treno.getFullYear() +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getMonth() + 1).padStart(
+                2,
+                "0",
+              ) +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getDate()).padStart(
+                2,
+                "0",
+              ),
+          );
+          console.log("Codice treno: " + subtrattaOccupata[0].codice_treno);
+          i++;
+        } else {
+          console.log(
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])}`,
+          );
+          orarioPartenza = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
+        }
+      }
+      console.log(
+        "-------Fine ciclo per controllo delle subtratte di ritorno--------",
+      );
 
       const differenza = differenzaInMinuti(
         new Date(dati.data),
-        dati.orario,
+        orarioPartenza,
         trenoDopo[0].data,
         trenoDopo[0].partenza,
       );
+
+      console.log(
+        `L'arrivo stimato del treno che si vuole creare nella stazione originale è alle: ${orarioPartenza} ${dati.data}`,
+      );
+      console.log(
+        `Mentre la partenza del primo treno che utilizza lo stesso convoglio nella stessa stazione è alle: ${trenoDopo[0].partenza} ${
+          trenoDopo[0].data.getFullYear() +
+          "-" +
+          String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(trenoDopo[0].data.getDate()).padStart(2, "0")
+        }`,
+      );
+      console.log(
+        `La differenza in minuti tra l'arrivo stimato  del treno che si vuole creare e il primo treno che utilizza lo stesso convoglio nella stessa stazione è di ${differenza} minuti`,
+      );
+
+      if (differenza < 0) {
+        return {
+          message: `Il treno selezionato non potrà tornare in tempo per il treno che parte alle ${trenoDopo[0].partenza} ${
+            trenoDopo[0].data.getFullYear() +
+            "-" +
+            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(trenoDopo[0].data.getDate()).padStart(2, "0")
+          }`,
+          errors: {},
+          enteredFormData: rawData,
+        };
+      }else{
+        return {
+          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima delle ${trenoDopo[0].partenza} ${
+            trenoDopo[0].data.getFullYear() +
+            "-" +
+            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(trenoDopo[0].data.getDate()).padStart(2, "0")
+          }`,
+          errors: {},
+          enteredFormData: rawData,
+          ritornoObbligatorio: true
+        };
+      }
     }
   } catch (error) {
     console.error(error);

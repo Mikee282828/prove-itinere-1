@@ -9,6 +9,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { TrainIcon } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import Link from "next/link";
 
 export default function Form({
   convogli,
@@ -271,8 +272,8 @@ export default function Form({
       {/* Bottoni */}
       <div className="mt-6 flex items-center justify-end gap-x-6">
         <div className="flex gap-x-6">
-          <Button type="reset" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300">
-            Cancella
+          <Button type="button" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300" onClick={(e)=>{e.preventDefault()}}>
+            <Link href={"/esercizio/crea-corsa"}>Cancella</Link>
           </Button>
           <Button
             type="submit"
