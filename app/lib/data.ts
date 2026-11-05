@@ -1,4 +1,6 @@
 import {
+  CodiciTreno,
+  DaUnoAVenti,
   MaterialeRotabile,
   Stazione,
   TracciaCorrente,
@@ -73,7 +75,7 @@ export async function fetchComposizioniDisponibili(
   orario: string,
   stazione: string,
 ): Promise<ConvoglioRaggruppato[]> {
-  // I convogli non ancora usati si trovano a Torre Spaventa quindi 
+  // I convogli non ancora usati si trovano a Torre Spaventa quindi
   // viene fatto il complementare dei convogli non disponibili
   if (stazione === "Torre Spaventa") {
     try {
@@ -239,6 +241,22 @@ export async function fetchTreno(
     throw new Error("Failed to fetch data.");
   }
 }
-function giornoPrecedente(data: string) {
-  throw new Error("Function not implemented.");
+
+export async function fetchTreniDisponibili(data: string) : Promise<CodiciTreno>{
+  try {
+    const codici = await sql`
+      SELECT codice
+      FROM generate_series(1, 20) AS codice
+      WHERE codice NOT IN (
+      SELECT codice 
+      FROM treno 
+      WHERE data = ${data}
+      AND codice IS NOT NULL
+);
+    `;
+    return codici as CodiciTreno;
+  } catch (error) {
+    console.error("Database Error:", error);
+    throw new Error("Failed to fetch data.");
+  }
 }

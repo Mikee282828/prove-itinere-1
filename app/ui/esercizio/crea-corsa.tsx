@@ -2,31 +2,29 @@
 import { ChevronDownIcon } from "@heroicons/react/16/solid";
 import { Button } from "../button";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
-import { DaUnoAVenti, Stazione } from "@/app/lib/definitions";
+import { CodiciTreno, DaUnoAVenti, Stazione } from "@/app/lib/definitions";
 import { createCorsa, StateCorsa } from "@/app/lib/actions";
 import { useActionState, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { TrainIcon } from "lucide-react";
 import { cn } from "@/app/lib/utils";
-import Link from "next/link";
 
 export default function Form({
   convogli,
+  codiciTreni
 }: {
   convogli: ConvoglioRaggruppato[] | null;
+  codiciTreni: CodiciTreno | null;
 }) {
   const initialState: StateCorsa = { message: null, errors: {} };
   const [state, formAction] = useActionState(createCorsa, initialState);
-  const codiciTreni: DaUnoAVenti[] = Array.from(
-    { length: 20 },
-    (_, i) => i + 1,
-  ) as DaUnoAVenti[];
 
   const inData = useRef<HTMLInputElement>(null);
   const inCodice = useRef<HTMLSelectElement>(null);
   const inOrario = useRef<HTMLInputElement>(null);
   const inStazione = useRef<HTMLSelectElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const searchParams = useSearchParams(); // Allows you to access the parameters of the current URL
   const pathname = usePathname(); // Allows you to access the path
@@ -61,8 +59,24 @@ export default function Form({
     }
   }
 
+  const handleDateSearch = (term: string) => {
+    if (term) {
+      params.set("data", term);
+    } else {
+      params.delete("data");
+    }
+    replace(`${pathname}?${params}`);
+  };
+
+  function allReset() {
+    formRef.current?.reset();
+    setErrore("");
+    replace(`${pathname}`);
+  }
+  
   return (
     <form
+      ref={formRef}
       className="flex-1 p-8"
       action={formAction}
       onReset={() => setConvoglioSelezionato(null)}
@@ -75,6 +89,7 @@ export default function Form({
 
       {/* Input form */}
       <div className="space-y-12">
+        <div className="text-red-500">(Inserisci data treno per visualizzare i codici treni disponibili)</div>
         <div className="border-b border-gray-900/10 pb-12">
           <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-8">
             {/* Input data treno */}
@@ -96,6 +111,7 @@ export default function Form({
                   defaultValue={state.enteredFormData?.data || searchParams.get("data") || ""}
                   ref={inData}
                   readOnly={searchParams.get("data") ? true : false}
+                  onChange={(e) => { handleDateSearch(e.target.value) }}
                 />
               </div>
               <div>
@@ -128,8 +144,8 @@ export default function Form({
                   ref={inCodice}
                   disabled={searchParams.get("codiceTreno") ? true : false}
                 >
-                  {codiciTreni.map((codici) => {
-                    return <option key={codici}>{codici}</option>;
+                  {codiciTreni?.map((codici) => {
+                    return <option key={codici.codice}>{codici.codice}</option>;
                   })}
                 </select>
                 <input type="hidden" name="codiceTreno" value={searchParams.get("codiceTreno") || ""} />
@@ -272,8 +288,8 @@ export default function Form({
       {/* Bottoni */}
       <div className="mt-6 flex items-center justify-end gap-x-6">
         <div className="flex gap-x-6">
-          <Button type="button" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300" onClick={(e)=>{e.preventDefault()}}>
-            <Link href={"/esercizio/crea-corsa"}>Cancella</Link>
+          <Button type="reset" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300" onClick={allReset}>
+            Cancella
           </Button>
           <Button
             type="submit"
