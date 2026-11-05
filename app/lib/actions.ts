@@ -5,8 +5,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import z from "zod";
 import { fetchComposizioniDisponibili, fetchStazioni } from "./data";
-import { differenzaInMinuti, sommaMinuti } from "./utils";
-import { Treno } from "./definitions";
+import { differenzaInMinuti, distanzaStazioni, sommaMinuti } from "./utils";
+import { Stazione, Treno } from "./definitions";
 
 const sql = neon(process.env.DATABASE_URL || "");
 
@@ -230,18 +230,10 @@ export async function createCorsa(
     };
   }
 
-  const stazioni = await fetchStazioni();
-  async function distanzaStazioni(speed: number): Promise<number[]> {
-    const tempi = [];
-    for (let i = 1; i < stazioni.length; i++) {
-      tempi.push(((stazioni[i].km - stazioni[i - 1].km) * 60) / speed);
-    }
-    console.log(tempi);
-    return tempi;
-  }
-
   // 2CONTROLLO se il convoglio ha bisogno di un ritorno obbligatorio o se non è possibile utilizzarlo
   // (ottimizzabile anticipando l'uscita nel caso ci sia overlap di subtratte con stessi convogli)
+  
+  const stazioni = await fetchStazioni();
   try {
     const trenoDopo = await sql`
     WITH 
@@ -274,7 +266,7 @@ export async function createCorsa(
     // controllo della disponibilità di tempo prima del primo treno successivo che abbia gli stessi attributi:
     // stazione partenza, convoglio
     if (trenoDopo.length > 0) {
-      const minutiPerSubtratta = await distanzaStazioni(50);
+      const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
 
       let subtrattaOccupata;
       let orarioPartenza = dati.orario;
@@ -283,6 +275,7 @@ export async function createCorsa(
 
       if (dati.stazione === "Villa San Felice") {
         stazioni.reverse();
+        minutiPerSubtratta.reverse();
       }
 
       // CICLO SUBTRATTE ANDATA
@@ -305,9 +298,9 @@ export async function createCorsa(
           OR (stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}))
           -- Data
           AND data_treno >= ${dati.data}
-          -- Orari che si intersichino
+          -- Orari che si intersicano
           AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])})
-          ORDER BY data_treno,fine_occupazione
+          ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
 
@@ -369,7 +362,7 @@ export async function createCorsa(
           AND data_treno >= ${dati.data}
           -- Orari che si intersichino
           AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])})
-          ORDER BY data_treno,fine_occupazione
+          ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
 
@@ -441,7 +434,7 @@ export async function createCorsa(
           errors: {},
           enteredFormData: rawData,
         };
-      }else{
+      } else {
         return {
           message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima delle ${trenoDopo[0].partenza} ${
             trenoDopo[0].data.getFullYear() +
@@ -452,7 +445,7 @@ export async function createCorsa(
           }`,
           errors: {},
           enteredFormData: rawData,
-          ritornoObbligatorio: true
+          ritornoObbligatorio: true,
         };
       }
     }

@@ -1,7 +1,7 @@
 // utility functions
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { NomiStazioni, Subtratta, TracciaCorrente, Treno } from './definitions';
+import { NomiStazioni, Stazione, Subtratta, TracciaCorrente, Treno } from './definitions';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -234,4 +234,11 @@ export function differenzaInMinuti(
 	return (end.getTime() - start.getTime()) / 60_000;
 }
 
-
+export async function distanzaStazioni(speed: number, stazioni:Stazione[]): Promise<number[]> {
+    const tempi = [];
+    for (let i = 1; i < stazioni.length; i++) {
+      tempi.push(((stazioni[i].km - stazioni[i - 1].km) * 60) / speed);
+    }
+    console.log(tempi);
+    return tempi;
+  }
