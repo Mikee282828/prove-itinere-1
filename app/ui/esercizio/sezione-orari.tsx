@@ -1,5 +1,5 @@
 import { Stazione, TracciaCorrente } from "@/app/lib/definitions";
-// import Search from "./cerca/searchTreno";
+import Search from "./cerca/searchTreno";
 // import Link from "next/link";
 // import React from "react";
 
@@ -153,6 +153,7 @@ export default function SezioneOrari({
   return(
     <div>
       Sezione Orari Placeholder
+      <Search />
     </div>
   )
 }
