@@ -1,6 +1,6 @@
-// "use client";
+"use client";
 // import { Button } from "../button";
-// import { Stazione, TracciaCorrente, Treno } from "@/app/lib/definitions";
+import { Stazione, TracciaCorrente, Treno } from "@/app/lib/definitions";
 // import { editCorsa, StateCorsa, deleteCorsa } from "@/app/lib/actions";
 // import { useActionState } from "react";
 
@@ -246,3 +246,19 @@
 
 //   );
 // }
+
+
+export default function Form({
+  stazioni,
+  tracce,
+  treno
+}: {
+  stazioni: Stazione[],
+  tracce: TracciaCorrente[],
+  treno: Treno[]
+}) {
+  return (
+    <div>
+      editCorsa Form
+    </div>)
+}
