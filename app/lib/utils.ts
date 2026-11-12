@@ -134,7 +134,8 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
 }
 
 // gestione orari
-export function sommaMinuti(orario: string, minutiDaAggiungere: number | string): string {
+// restituisce la somma in minuti e i giorni aggiunti dall'orario iniziale
+export function sommaMinuti(orario: string, minutiDaAggiungere: number | string) {
   // 1. Uniformiamo la virgola in punto se viene passata una stringa (es. "3,5" -> 3.5)
   const minutiFloat = typeof minutiDaAggiungere === "string" 
     ? parseFloat(minutiDaAggiungere.replace(",", ".")) 
@@ -152,6 +153,7 @@ export function sommaMinuti(orario: string, minutiDaAggiungere: number | string)
   // 4. Calcoliamo i secondi totali dall'inizio del giorno
   // Un giorno intero ha 86400 secondi (24 * 60 * 60)
   let secondiTotali = (ore * 3600) + (minuti * 60) + secondi + secondiDaAggiungere;
+  const differenzaGiorni = Math.floor(secondiTotali / 86400)
 
   // 5. Gestiamo il cambio di giorno (modulo 86400)
   secondiTotali = secondiTotali % 86400;
@@ -170,7 +172,7 @@ export function sommaMinuti(orario: string, minutiDaAggiungere: number | string)
   const mm = String(nuoviMinuti).padStart(2, "0");
   const ss = String(nuoviSecondi).padStart(2, "0");
 
-  return `${hh}:${mm}:${ss}`;
+  return [`${hh}:${mm}:${ss}`,differenzaGiorni];
 }
 
 function giornoPrecedente(data: string): string {

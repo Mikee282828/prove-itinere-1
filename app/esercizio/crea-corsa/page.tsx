@@ -1,5 +1,5 @@
-import { ConvoglioRaggruppato, fetchComposizioniDisponibili, fetchStazioni, fetchTreniDisponibili } from "@/app/lib/data";
-import { CodiciTreno, Convoglio, DaUnoAVenti, Stazione } from "@/app/lib/definitions";
+import { ConvoglioRaggruppato, fetchComposizioniDisponibili, fetchTreniDisponibili } from "@/app/lib/data";
+import { CodiciTreno } from "@/app/lib/definitions";
 import Form from "@/app/ui/esercizio/crea-corsa";
 
 export default async function Page(props: {
@@ -15,15 +15,19 @@ export default async function Page(props: {
   const stazione = searchParams?.stazione || "";
 
   let convogliDisponibili: ConvoglioRaggruppato[] | null = null;
-  let treniDisponibili : CodiciTreno | null = null;
-  if(data){
-    treniDisponibili = await fetchTreniDisponibili(data);
+  let treniDisponibili: CodiciTreno | null = null;
+  if (data) {
+    try {
+      treniDisponibili = await fetchTreniDisponibili(data);
+    } catch (error) {
+      alert(error);
+    }
   }
 
   if (data && orario && stazione) {
     try {
       convogliDisponibili = await fetchComposizioniDisponibili(data, orario, stazione);
-    }catch(e){
+    } catch (e) {
       alert(e);
     }
   }

@@ -138,6 +138,7 @@ const corsaSchema = z.object({
     .min(1),
   orario: z.iso.time("Inserire un orario valido!"),
   stazione: z.enum(["Torre Spaventa", "Villa San Felice"]),
+  ritorno: z.iso.time("Inserire un orario valido!"),
 });
 
 export type StateCorsa = {
@@ -147,6 +148,9 @@ export type StateCorsa = {
     convoglio?: string[];
     orario?: string[];
     stazione?: string[];
+    orario_ritorno?: string[];
+    data_ritorno?: string[];
+    codiceTreno_ritorno?: string[];
   };
   message?: string | null;
   enteredFormData?: {
@@ -155,18 +159,25 @@ export type StateCorsa = {
     convoglio?: string;
     orario?: string;
     stazione?: string;
+    orario_ritorno?: string;
+    data_ritorno?: string;
+    codiceTreno_ritorno?: string;
   };
   ritornoObbligatorio?: boolean;
+  inizioRitorno?: string;
+  dataRitorno?: string;
 };
 
 //---------CREATE CORSA---------//
+
+const noReturnCorsaSchema = corsaSchema.omit({ ritorno: true });
 
 export async function createCorsa(
   prevState: StateCorsa,
   formData: FormData,
 ): Promise<StateCorsa> {
   // prende campo name e non id! (gli input html)
-  const validatedFields = corsaSchema.safeParse({
+  const validatedFields = noReturnCorsaSchema.safeParse({
     data: formData.get("data"),
     codiceTreno: formData.get("codiceTreno"),
     orario: formData.get("orario"),
@@ -204,7 +215,7 @@ export async function createCorsa(
   //#daFare
   // * 1se il convoglio è effetivamente disponibile
   // *(manca la creazione forzata del ritorno) 2se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
-  // - 3se il convoglio è disponibile e senza vincoli allora crealo
+  // *(gestire il caso di cambio giorno) 3se il convoglio è disponibile e senza vincoli allora crealo
 
   // Controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
   try {
@@ -251,6 +262,478 @@ export async function createCorsa(
 
   // 2CONTROLLO se il convoglio ha bisogno di un ritorno obbligatorio o se non è possibile utilizzarlo
   // (ottimizzabile anticipando l'uscita nel caso ci sia overlap di subtratte con stessi convogli)
+
+  try {
+    const trenoDopo = await sql`
+    WITH 
+    tracce_unite AS (
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_passata
+    UNION ALL
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_corrente
+   )
+   SELECT 
+      treno.convoglio,
+      tr.stazione,
+      tr.data,
+      tr.orario_partenza AS partenza
+    FROM treno
+    JOIN tracce_unite AS tr
+      ON tr.data = treno.data 
+     AND tr.treno = treno.codice
+    WHERE 
+      ((tr.data = ${dati.data} AND tr.orario_partenza >= ${dati.orario}) -- orario e data a scelta
+      OR tr.data > ${dati.data}) -- data a scelta
+      AND treno.convoglio = ${dati.convoglio}    -- convoglio a scelta
+      AND tr.stazione IN (${dati.stazione})    -- uno delle 2 stazioni terminali 
+      AND tr.orario_arrivo IS NULL
+      AND tr.orario_partenza IS NOT NULL
+    ORDER BY data,partenza ASC
+    LIMIT 1;
+    `;
+    // controllo della disponibilità di tempo prima del primo treno successivo che abbia gli stessi attributi:
+    // stazione partenza, convoglio
+    if (trenoDopo.length > 0) {
+      const stazioni = await fetchStazioni();
+      const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
+
+      let subtrattaOccupata;
+      let orarioPartenza = dati.orario;
+
+      // se Torre Spaventa => parti normalmente altrimenti inverti l'ordine delle stazioni
+
+      if (dati.stazione === "Villa San Felice") {
+        stazioni.reverse();
+        minutiPerSubtratta.reverse();
+      }
+
+      // CICLO SUBTRATTE ANDATA
+      console.log(
+        "-------Inizio ciclo per controllo delle subtratte in andata--------",
+      );
+      let giorniTrascorsi = 0;
+      for (let i = 0; i < minutiPerSubtratta.length; i++) {
+        // Controlla se la subtratta è occupata
+        console.log(
+          "---------------------------------------------------------",
+        );
+        console.log("index = " + i);
+        console.log(`Subtratta: ${stazioni[i].nome} - ${stazioni[i + 1].nome}`);
+
+        subtrattaOccupata = await sql`
+          SELECT * FROM subtratta 
+          WHERE 
+          -- Stazioni
+          ((stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i + 1].nome}) 
+          OR (stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}))
+          -- Data
+          AND data_treno >= ${dati.data}
+          -- Orari che si intersicano
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          ORDER BY data_treno,inizio_occupazione
+          LIMIT 1;
+        `;
+
+        let tempSommaOrario;
+        // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
+        if (subtrattaOccupata.length > 0) {
+          orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+          console.log(
+            `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+          );
+          console.log(
+            "Data treno: " +
+              subtrattaOccupata[0].data_treno.getFullYear() +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getMonth() + 1).padStart(
+                2,
+                "0",
+              ) +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getDate()).padStart(
+                2,
+                "0",
+              ),
+          );
+          console.log("Codice treno: " + subtrattaOccupata[0].codice_treno);
+          i--;
+        } else {
+          console.log(
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])}`,
+          );
+          tempSommaOrario = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
+          orarioPartenza = tempSommaOrario[0] as string;
+          giorniTrascorsi += tempSommaOrario[1] as number;
+        }
+      }
+      console.log(
+        "-------Fine ciclo per controllo delle subtratte in andata--------",
+      );
+
+      console.log(
+        "-----------------------------------------------------------------------------------------------------------",
+      );
+      // CICLO SUBTRATTE RITORNO
+      console.log(
+        "-------Inizio ciclo per controllo delle subtratte di ritorno--------",
+      );
+
+      const inizioRitorno = orarioPartenza;
+      let dataRitorno = new Date(dati.data);
+      dataRitorno.setDate(dataRitorno.getDate() + giorniTrascorsi);
+
+      for (let i = minutiPerSubtratta.length - 1; i >= 0; i--) {
+        // Controlla se la subtratta è occupata
+        console.log(
+          "---------------------------------------------------------",
+        );
+        console.log("index = " + i);
+        console.log(`Subtratta: ${stazioni[i + 1].nome} - ${stazioni[i].nome}`);
+
+        subtrattaOccupata = await sql`
+          SELECT * FROM subtratta 
+          WHERE 
+          -- Stazioni
+          ((stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}) 
+          OR (stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i + 1].nome}))
+          -- Data
+          AND data_treno >= ${dati.data}
+          -- Orari che si intersichino
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          ORDER BY data_treno,inizio_occupazione
+          LIMIT 1;
+        `;
+
+        let tempSommaOrario;
+        // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
+        if (subtrattaOccupata.length > 0) {
+          orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+          console.log(
+            `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+          );
+          console.log(
+            "Data treno: " +
+              subtrattaOccupata[0].data_treno.getFullYear() +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getMonth() + 1).padStart(
+                2,
+                "0",
+              ) +
+              "-" +
+              String(subtrattaOccupata[0].data_treno.getDate()).padStart(
+                2,
+                "0",
+              ),
+          );
+          console.log("Codice treno: " + subtrattaOccupata[0].codice_treno);
+          i++;
+        } else {
+          console.log(
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]}`,
+          );
+          tempSommaOrario = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
+          orarioPartenza = tempSommaOrario[0] as string;
+          giorniTrascorsi += tempSommaOrario[1] as number;
+        }
+      }
+      console.log(
+        "-------Fine ciclo per controllo delle subtratte di ritorno--------",
+      );
+
+      const dataArrivoCalcolato = new Date(dati.data);
+      dataArrivoCalcolato.setDate(
+        dataArrivoCalcolato.getDate() + giorniTrascorsi,
+      );
+
+      const differenza = differenzaInMinuti(
+        dataArrivoCalcolato,
+        orarioPartenza,
+        trenoDopo[0].data,
+        trenoDopo[0].partenza,
+      );
+
+      console.log(
+        `L'arrivo stimato del treno che si vuole creare nella stazione originale è alle: ${orarioPartenza} ${
+          dataArrivoCalcolato.getFullYear() +
+          "-" +
+          String(dataArrivoCalcolato.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(dataArrivoCalcolato.getDate()).padStart(2, "0")
+        }`,
+      );
+      console.log(
+        `Mentre la partenza del primo treno che utilizza lo stesso convoglio nella stessa stazione è alle: ${trenoDopo[0].partenza} ${
+          trenoDopo[0].data.getFullYear() +
+          "-" +
+          String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+          "-" +
+          String(trenoDopo[0].data.getDate()).padStart(2, "0")
+        }`,
+      );
+      console.log(
+        `La differenza in minuti tra l'arrivo stimato  del treno che si vuole creare e il primo treno che utilizza lo stesso convoglio nella stessa stazione è di ${differenza} minuti`,
+      );
+
+      if (differenza < 0) {
+        return {
+          message: `Il convoglio selezionato non potrà tornare in tempo per il treno che parte alle ${trenoDopo[0].partenza} ${
+            trenoDopo[0].data.getFullYear() +
+            "-" +
+            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(trenoDopo[0].data.getDate()).padStart(2, "0")
+          }`,
+          errors: {},
+          enteredFormData: rawData,
+        };
+      } else {
+        return {
+          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima delle ${trenoDopo[0].partenza} ${
+            trenoDopo[0].data.getFullYear() +
+            "-" +
+            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(trenoDopo[0].data.getDate()).padStart(2, "0")
+          }`,
+          errors: {},
+          enteredFormData: rawData,
+          ritornoObbligatorio: true,
+          inizioRitorno: inizioRitorno,
+          dataRitorno: `${
+            dataRitorno.getFullYear() +
+            "-" +
+            String(dataRitorno.getMonth() + 1).padStart(2, "0") +
+            "-" +
+            String(dataRitorno.getDate()).padStart(2, "0")
+          }`,
+        };
+      }
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore. Si è verificato un errore nella verifica.",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  // 3CREAZIONE CORSA
+  try {
+    // init array di query
+    const transactionQueries = [];
+    //treno
+    transactionQueries.push(sql`INSERT INTO treno (codice, convoglio, data, stato) 
+                                VALUES (${dati.codiceTreno}, ${dati.convoglio}, ${dati.data}, 'finalizzato') 
+                                ON CONFLICT (codice,data) DO NOTHING;`);
+
+    const stazioni = await fetchStazioni();
+    const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
+    let subtrattaOccupata;
+    let orarioPartenza = dati.orario;
+
+    // se Torre Spaventa => parti normalmente altrimenti inverti l'ordine delle stazioni
+
+    if (dati.stazione === "Villa San Felice") {
+      stazioni.reverse();
+      minutiPerSubtratta.reverse();
+    }
+
+    // CICLO SUBTRATTE ANDATA
+    console.log(
+      "-------Inizio ciclo per controllo delle subtratte in andata--------",
+    );
+
+    for (let i = 0; i < minutiPerSubtratta.length; i++) {
+      // Controlla se la subtratta è occupata
+      console.log("---------------------------------------------------------");
+      console.log("index = " + i);
+      console.log(`Subtratta: ${stazioni[i].nome} - ${stazioni[i + 1].nome}`);
+
+      subtrattaOccupata = await sql`
+          SELECT * FROM subtratta 
+          WHERE 
+          -- Stazioni
+          ((stazione_a = ${stazioni[i].nome} AND stazione_b = ${stazioni[i + 1].nome}) 
+          OR (stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}))
+          -- Data
+          AND data_treno >= ${dati.data}
+          -- Orari che si intersicano
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          ORDER BY data_treno,inizio_occupazione
+          LIMIT 1;
+        `;
+
+      // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
+      if (subtrattaOccupata.length > 0) {
+        orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+        console.log(
+          `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+        );
+        console.log(
+          "Data treno: " +
+            subtrattaOccupata[0].data_treno.getFullYear() +
+            "-" +
+            String(subtrattaOccupata[0].data_treno.getMonth() + 1).padStart(
+              2,
+              "0",
+            ) +
+            "-" +
+            String(subtrattaOccupata[0].data_treno.getDate()).padStart(2, "0"),
+        );
+        console.log("Codice treno: " + subtrattaOccupata[0].codice_treno);
+        i--;
+      } else {
+        console.log(
+          `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]}`,
+        );
+
+        // query di inserimento andata
+        //traccia
+        transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
+                                        VALUES (
+                                        ${i > 0 ? orarioPartenza : null},
+                                        ${orarioPartenza},
+                                        ${stazioni[i].nome},
+                                        ${dati.codiceTreno},
+                                        ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
+        // subtratta
+        transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
+                                    VALUES (${stazioni[i].nome},${stazioni[i + 1].nome},${orarioPartenza},${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]},${dati.codiceTreno},${dati.data});
+                `);
+
+        orarioPartenza = sommaMinuti(
+          orarioPartenza,
+          minutiPerSubtratta[i],
+        )[0] as string;
+
+        if (i === minutiPerSubtratta.length - 1) {
+          transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
+                                        VALUES (
+                                        ${orarioPartenza},
+                                        ${null},
+                                        ${stazioni[i + 1].nome},
+                                        ${dati.codiceTreno},
+                                        ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
+        }
+      }
+    }
+    console.log(
+      "-------Fine ciclo per controllo delle subtratte in andata--------",
+    );
+
+    // transactionQueries.forEach((q, index) => {
+    //   console.log(`--- Query #${index + 1} ---`);
+    //   console.log(q);
+    // });
+
+    await sql.transaction(transactionQueries);
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore nella creazione",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  revalidatePath("/esercizio"); // clear cached path
+  redirect("/esercizio"); // redirect
+}
+
+export async function createCorsaWithRitorno(
+  prevState: StateCorsa,
+  formData: FormData,
+): Promise<StateCorsa> {
+  // prende campo name e non id! (gli input html)
+  const validatedFields = corsaSchema.safeParse({
+    data: formData.get("data"),
+    codiceTreno: formData.get("codiceTreno"),
+    orario: formData.get("orario"),
+    stazione: formData.get("stazione"),
+    convoglio: formData.get("convoglio"),
+    ritorno: formData.get("ritorno"),
+  });
+
+  console.log(
+    "data " + formData.get("data"),
+    "codice " + formData.get("codiceTreno"),
+    "orario " + formData.get("orario"),
+    "stazione " + formData.get("stazione"),
+    "convoglio " + formData.get("convoglio"),
+    "ritorno " + formData.get("ritorno"),
+  );
+
+  // Dati da restituire indietro nel caso di errori
+  const rawData = {
+    data: formData.get("data") as string,
+    codiceTreno: formData.get("codiceTreno") as string,
+    convoglio: formData.get("convoglio") as string,
+    stazione: formData.get("stazione") as string,
+    orario: formData.get("orario") as string,
+    ritorno: formData.get("ritorno") as string,
+  };
+
+  if (!validatedFields.success) {
+    return {
+      errors: validatedFields.error.flatten().fieldErrors,
+      message: "Campi mancanti. Creazione corsa fallita.",
+      enteredFormData: rawData,
+    };
+  }
+
+  const dati = validatedFields.data;
+
+  //#daFare
+  // * 1se il convoglio è effetivamente disponibile
+  // - 2se l'orario del ritorno passa i controlli
+  // * 3se il convoglio è disponibile e senza vincoli allora crealo
+
+  // Controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
+  try {
+    const trenoPresente =
+      await sql`SELECT * FROM treno WHERE treno.data = ${dati.data} AND treno.codice = ${dati.codiceTreno} `;
+    if (trenoPresente.length !== 0)
+      return {
+        message:
+          "Errore. Impossibile creare un treno con lo stesso codice di un altro treno nello stesso giorno",
+        enteredFormData: rawData,
+      };
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Errore di controllo",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  //1CONTROLLO se il convoglio è effettivamente disponibile
+  try {
+    const convogliDisponibili = await fetchComposizioniDisponibili(
+      dati.data,
+      dati.orario,
+      dati.stazione,
+    );
+    if (
+      convogliDisponibili.some(
+        (convoglio) => convoglio.convoglio === String(dati.convoglio),
+      )
+    ) {
+    } else {
+      throw Error;
+    }
+  } catch (error) {
+    console.error(error);
+    return {
+      message: "Il convoglio non è disponibile nel lasso di tempo selezionato",
+      errors: {},
+      enteredFormData: rawData,
+    };
+  }
+
+  // 2CONTROLLO se l'orario di ritorno scelto è accettabile
 
   try {
     const trenoDopo = await sql`
@@ -363,6 +846,12 @@ export async function createCorsa(
       console.log(
         "-------Inizio ciclo per controllo delle subtratte di ritorno--------",
       );
+
+      const inizioRitorno = orarioPartenza;
+
+      // if(differenzaInMinuti(inizioRitorno,dati.ritorno)>=0){
+      // }
+
       for (let i = minutiPerSubtratta.length - 1; i >= 0; i--) {
         // Controlla se la subtratta è occupata
         console.log(
@@ -465,6 +954,7 @@ export async function createCorsa(
           errors: {},
           enteredFormData: rawData,
           ritornoObbligatorio: true,
+          inizioRitorno: inizioRitorno,
         };
       }
     }
@@ -568,7 +1058,7 @@ export async function createCorsa(
                                         VALUES (
                                         ${orarioPartenza},
                                         ${null},
-                                        ${stazioni[i+1].nome},
+                                        ${stazioni[i + 1].nome},
                                         ${dati.codiceTreno},
                                         ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
         }

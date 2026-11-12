@@ -2,13 +2,14 @@
 import { ChevronDownIcon } from "@heroicons/react/16/solid";
 import { Button } from "../button";
 import { ConvoglioRaggruppato } from "@/app/lib/data";
-import { CodiciTreno, DaUnoAVenti, Stazione } from "@/app/lib/definitions";
+import { CodiciTreno } from "@/app/lib/definitions";
 import { createCorsa, StateCorsa } from "@/app/lib/actions";
 import { useActionState, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "../card";
 import { TrainIcon } from "lucide-react";
 import { cn } from "@/app/lib/utils";
+import Link from "next/link";
 
 export default function Form({
   convogli,
@@ -31,6 +32,7 @@ export default function Form({
   const { replace } = useRouter(); //  Enables navigation between routes within client components programmatically
 
   const params = new URLSearchParams(searchParams); // URLSearchParams is a Web API that provides utility methods for manipulating the URL query parameters.
+  console.log(searchParams.toString());
 
   // stringa d'errore da mostrare
   const [errore, setErrore] = useState("");
@@ -73,7 +75,7 @@ export default function Form({
     setErrore("");
     replace(`${pathname}`);
   }
-  
+
   return (
     <form
       ref={formRef}
@@ -84,6 +86,15 @@ export default function Form({
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
+          {state.ritornoObbligatorio &&
+            <span className=" text-sm font-medium text-red-800">
+              Clicca {' '}
+              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&orario_ritorno=${state.inizioRitorno}&data_ritorno=${state.dataRitorno}`} className="underline text-blue-400 hover:text-blue-500">
+                qui {' '}
+              </Link>
+              per proseguire
+            </span>}
+
         </div>
       )}
 
@@ -315,6 +326,15 @@ export default function Form({
       {state.message && (
         <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
+          {state.ritornoObbligatorio &&
+            <span className=" text-sm font-medium text-red-800">
+              Clicca {' '}
+              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&orario_ritorno=${state.inizioRitorno}&data_ritorno=${state.dataRitorno}`} 
+              className="underline text-blue-400 hover:text-blue-500">
+                qui {' '}
+              </Link>
+              per proseguire
+            </span>}
         </div>
       )}
       <div className="text-red-500">{errore}</div>
