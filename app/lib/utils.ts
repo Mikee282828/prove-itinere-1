@@ -35,6 +35,16 @@ const modelloGiornalieroRitorno = [
   { stazione: "Torre Spaventa", arrivo: "15:27:00", partenza: null},
 ];
 
+function creaTimestampOccupazione(data: Date, orario: string | null): string | null {
+  if (orario === null) return null;
+  return `${data.toISOString().slice(0, 10)}T${orario}Z`;
+}
+
+function creaTimestampTraccia(data: Date, orario: string | null): string | null {
+  if (orario === null) return null;
+  return `${data.toISOString().slice(0, 10)}T${orario}`;
+}
+
 export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
 
   if (dataInizio > dataFine) {
@@ -45,13 +55,14 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
 
   const tutteLeTracce: TracciaCorrente[] = [];
   for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
+    const dataTraccia = new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni);
 
     modelloGiornaliero.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
-        orario_arrivo: modello.arrivo,
-        orario_partenza: modello.partenza,
-        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+        orario_arrivo: creaTimestampTraccia(dataTraccia, modello.arrivo),
+        orario_partenza: creaTimestampTraccia(dataTraccia, modello.partenza),
+        data: new Date(dataTraccia.getTime()),
         treno: 1,
       });
     });
@@ -59,9 +70,9 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
     modelloGiornalieroRitorno.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
-        orario_arrivo: modello.arrivo,
-        orario_partenza: modello.partenza,
-        data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+        orario_arrivo: creaTimestampTraccia(dataTraccia, modello.arrivo),
+        orario_partenza: creaTimestampTraccia(dataTraccia, modello.partenza),
+        data: new Date(dataTraccia.getTime()),
         treno: 2,
       });
     });
@@ -111,8 +122,14 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
       subtratte.push({
         stazione_a: modelloGiornaliero[i].stazione as NomiStazioni,
         stazione_b: modelloGiornaliero[i+1].stazione as NomiStazioni,
-        inizio_occupazione: modelloGiornaliero[i].partenza,
-        fine_occupazione: modelloGiornaliero[i+1].arrivo,
+        inizio_occupazione: creaTimestampOccupazione(
+          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+          modelloGiornaliero[i].partenza,
+        ),
+        fine_occupazione: creaTimestampOccupazione(
+          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+          modelloGiornaliero[i+1].arrivo,
+        ),
         codice_treno: 1,
         data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
       });
@@ -122,8 +139,14 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
       subtratte.push({
         stazione_a: modelloGiornalieroRitorno[i].stazione as NomiStazioni,
         stazione_b: modelloGiornalieroRitorno[i+1].stazione as NomiStazioni,
-        inizio_occupazione: modelloGiornalieroRitorno[i].partenza,
-        fine_occupazione: modelloGiornalieroRitorno[i+1].arrivo,
+        inizio_occupazione: creaTimestampOccupazione(
+          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+          modelloGiornalieroRitorno[i].partenza,
+        ),
+        fine_occupazione: creaTimestampOccupazione(
+          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+          modelloGiornalieroRitorno[i+1].arrivo,
+        ),
         codice_treno: 2,
         data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
       });

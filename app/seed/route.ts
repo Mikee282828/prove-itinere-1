@@ -80,8 +80,8 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_passata (
-        orario_arrivo   TIME,
-        orario_partenza TIME,
+        orario_arrivo   TIMESTAMP,
+        orario_partenza TIMESTAMP,
         stazione        VARCHAR(255) NOT NULL,
         data            DATE         NOT NULL,
         treno           INT          NOT NULL,
@@ -92,8 +92,8 @@ export async function GET() {
     `);
     transactionQueries.push(sql`
       CREATE TABLE IF NOT EXISTS traccia_corrente (
-        orario_arrivo   TIME,
-        orario_partenza TIME,
+        orario_arrivo   TIMESTAMP,
+        orario_partenza TIMESTAMP,
         stazione        VARCHAR(255) NOT NULL,
         treno           INT          NOT NULL,
         data            DATE         NOT NULL,
@@ -171,8 +171,8 @@ export async function GET() {
       CREATE TABLE IF NOT EXISTS subtratta (
         stazione_a      VARCHAR(255) NOT NULL,
         stazione_b      VARCHAR(255) NOT NULL,
-        inizio_occupazione TIME NOT NULL, 
-        fine_occupazione TIME NOT NULL, 
+        inizio_occupazione TIMESTAMP NOT NULL,
+        fine_occupazione TIMESTAMP NOT NULL,
         codice_treno    INT,
         data_treno      DATE,
         FOREIGN KEY (stazione_a) REFERENCES stazione(nome),
