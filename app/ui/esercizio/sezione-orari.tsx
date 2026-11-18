@@ -150,9 +150,9 @@ export default function SezioneOrari({
   tracce: TracciaCorrente[] | null;
   stazioni: Stazione[] | null;
 }) {
+  if(active)
   return(
     <div>
-      Sezione Orari Placeholder
       <Search />
     </div>
   )
