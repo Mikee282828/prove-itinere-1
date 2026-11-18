@@ -6,7 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ChevronDownIcon } from "lucide-react";
 import { CodiciTreno } from "@/app/lib/definitions";
-import { cn } from "@/app/lib/utils";
+import { cn, estraiData, formattaTimeStamp } from "@/app/lib/utils";
 
 export default function Form({
   data,
@@ -14,21 +14,19 @@ export default function Form({
   stazione,
   convoglio,
   codiceTreno,
-  orario_ritorno,
-  data_ritorno,
-  codiciTreni
+  tempo_ritorno_min,
+  treniDisponibili
 }: {
   data: string,
   orario: string,
   stazione: string,
   convoglio: string,
   codiceTreno: string,
-  orario_ritorno: string,
-  data_ritorno: string,
-  codiciTreni: CodiciTreno | null;
+  tempo_ritorno_min: string,
+  treniDisponibili: CodiciTreno | null;
 }) {
-  const inData = useRef<HTMLInputElement>(null);
-  const inCodice = useRef<HTMLSelectElement>(null);
+  const inDataRitorno = useRef<HTMLInputElement>(null);
+  const inCodiceRitorno = useRef<HTMLSelectElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
 
   const initialState: StateCorsa = { message: null, errors: {} };
@@ -42,9 +40,9 @@ export default function Form({
 
   const handleDateSearch = (term: string) => {
     if (term) {
-      params.set("data", term);
+      params.set("data_ritorno", term);
     } else {
-      params.delete("data");
+      params.delete("data_ritorno");
     }
     replace(`${pathname}?${params}`);
   };
@@ -54,8 +52,10 @@ export default function Form({
 
   function allReset() {
     formRef.current?.reset();
+    params.delete("data_ritorno");
+    params.delete("orario_ritorno");
     setErrore("");
-    replace(`${pathname}`);
+    replace(`${pathname}?${params}`);
   }
 
   return (
@@ -65,17 +65,8 @@ export default function Form({
       action={formAction}
     >
       {state.message && (
-        <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
+        <div className="mt-6 p-4 rounded-md bg-red-50 border border-red-200">
           <p className="text-sm font-medium text-red-800">{state.message}</p>
-          {state.ritornoObbligatorio &&
-            <span className=" text-sm font-medium text-red-800">
-              Clicca {' '}
-              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}`} className="underline text-blue-400 hover:text-blue-500">
-                qui {' '}
-              </Link>
-              per proseguire
-            </span>}
-
         </div>
       )}
 
@@ -233,38 +224,36 @@ export default function Form({
 
 
         {/* RITORNO */}
-        Selezionare un orario di ritorno uguale o successivo a {orario_ritorno}<span className="text-red-400">*</span>
+        Selezionare un orario di ritorno uguale o successivo a { formattaTimeStamp(tempo_ritorno_min)}<span className="text-red-400">*</span>
 
         <div className="space-y-12">
           <div className="text-red-500">(Inserisci data treno per visualizzare i codici treni disponibili)</div>
           <div className="border-b border-gray-900/10 pb-12">
             <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-8">
 
-              {/* Input data treno */}
+              {/* Input data treno ritorno*/}
               <div className="sm:col-span-2 col-span-8">
                 <label
-                  htmlFor="data"
+                  htmlFor="data_ritorno"
                   className="block text-sm/6 font-medium text-gray-900"
                 >
-                  Data treno<span className="text-red-400">*</span>
+                  Data treno ritorno<span className="text-red-400">*</span>
                 </label>
                 <div className="mt-2">
                   <input
-                    id="data"
-                    name="data"
+                    min={estraiData(tempo_ritorno_min) || ""}
+                    id="data_ritorno"
+                    name="data_ritorno"
                     type="date"
-                    className={cn("block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
-                      searchParams.get("data") && "text-gray-300"
-                    )}
-                    defaultValue={state.enteredFormData?.data || searchParams.get("data") || ""}
-                    ref={inData}
-                    readOnly={searchParams.get("data") ? true : false}
+                    className="block w-full rounded-md bg-white px-3 py-1.5 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                    defaultValue={state.enteredFormData?.data_ritorno || searchParams.get("data_ritorno") || ""}
+                    ref={inDataRitorno}
                     onChange={(e) => { handleDateSearch(e.target.value) }}
                   />
                 </div>
                 <div>
-                  {state.errors?.data &&
-                    state.errors.data.map((error: string) => (
+                  {state.errors?.data_ritorno &&
+                    state.errors.data_ritorno.map((error: string) => (
                       <p className="mt-2 text-sm text-red-500" key={error}>
                         {error}
                       </p>
@@ -272,70 +261,78 @@ export default function Form({
                 </div>
               </div>
 
-              {/* Input Codice Treno */}
+              {/* Input Codice Treno ritorno*/}
               <div className="sm:col-span-2 col-span-8">
                 <label
-                  htmlFor="codiceTreno"
+                  htmlFor="codiceTreno_ritorno"
                   className="block text-sm/6 font-medium text-gray-900"
                 >
-                  Codice treno<span className="text-red-400">*</span>
+                  Codice treno ritorno<span className="text-red-400">*</span>
                 </label>
                 <div className="mt-2 grid grid-cols-1">
                   <select
-                    id="codiceTreno"
-                    name="codiceTreno"
-                    key={state.enteredFormData?.codiceTreno}
-                    className={cn("col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer",
-                      searchParams.get("codiceTreno") && "text-gray-300"
-                    )}
-                    defaultValue={state.enteredFormData?.codiceTreno || searchParams.get("codiceTreno") || "1"}
-                    ref={inCodice}
-                    disabled={searchParams.get("codiceTreno") ? true : false}
+                    id="codiceTreno_ritorno"
+                    name="codiceTreno_ritorno"
+                    key={state.enteredFormData?.codiceTreno_ritorno || searchParams.get("data_ritorno")}
+                    className="col-start-1 row-start-1 w-full appearance-none rounded-md bg-white py-1.5 pr-8 pl-3 text-base text-gray-900 outline-1 -outline-offset-1 outline-gray-300 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6 cursor-pointer"
+                    defaultValue={state.enteredFormData?.codiceTreno_ritorno || ""}
+                    ref={inCodiceRitorno}
                   >
-                    {codiciTreni?.map((codici) => {
-                      return <option key={codici.codice}>{codici.codice}</option>;
-                    })}
+                    <option value="">
+                      {treniDisponibili && treniDisponibili.length > 0
+                        ? "Seleziona codice treno"
+                        : "Nessun codice disponibile (inserisci data)"}
+                    </option>
+                    {treniDisponibili
+                      ?.filter((t) => {
+                        if (searchParams.get("data_ritorno") === data) {
+                          return String(t.codice) !== String(codiceTreno);
+                        }
+                        return true;
+                      })
+                      .map((codici) => {
+                        return (
+                          <option key={codici.codice} value={codici.codice}>
+                            {codici.codice}
+                          </option>
+                        );
+                      })}
                   </select>
-                  <input type="hidden" name="codiceTreno" value={searchParams.get("codiceTreno") || ""} />
-                  {!searchParams.get("codiceTreno") && (
-                    <ChevronDownIcon
-                      aria-hidden="true"
-                      className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
-                    />
-                  )}
-                  <div>
-                    {state.errors?.codiceTreno &&
-                      state.errors.codiceTreno.map((error: string) => (
-                        <p className="mt-2 text-sm text-red-500" key={error}>
-                          {error}
-                        </p>
-                      ))}
-                  </div>
+                  <ChevronDownIcon
+                    aria-hidden="true"
+                    className="pointer-events-none col-start-1 row-start-1 mr-2 size-5 self-center justify-self-end text-gray-500 sm:size-4"
+                  />
                 </div>
-
-
-                {/* Input Orario ritorno */}
+                <div>
+                  {state.errors?.codiceTreno_ritorno &&
+                    state.errors.codiceTreno_ritorno.map((error: string) => (
+                      <p className="mt-2 text-sm text-red-500" key={error}>
+                        {error}
+                      </p>
+                    ))}
+                </div>
               </div>
-              <div className="md:col-span-2 col-span-8">
+
+              {/* Input Orario ritorno */}
+              <div className="sm:col-span-2 col-span-8">
                 <label
                   htmlFor="orario_ritorno"
                   className="block text-sm/6 font-medium text-gray-900"
                 >
-                  Orario orario_ritorno<span className="text-red-400">*</span>
+                  Orario ritorno<span className="text-red-400">*</span>
                 </label>
                 <div className="mt-2">
                   <input
                     id="orario_ritorno"
                     name="orario_ritorno"
                     type="time"
-                    min={orario_ritorno}
                     className="block w-full rounded-md bg-white px-3 py-1.5 text-base outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:text-sm/6"
-                    defaultValue={state.enteredFormData?.orario_ritorno || orario_ritorno || ""}
+                    defaultValue={state.enteredFormData?.orario_ritorno || ""}
                   />
                 </div>
                 <div>
-                  {state.errors?.orario &&
-                    state.errors.orario.map((error: string) => (
+                  {state.errors?.orario_ritorno &&
+                    state.errors.orario_ritorno.map((error: string) => (
                       <p className="mt-2 text-sm text-red-500" key={error}>
                         {error}
                       </p>
@@ -351,31 +348,17 @@ export default function Form({
       {/* Bottoni */}
       <div className="mt-6 flex items-center justify-end gap-x-6">
         <div className="flex gap-x-6">
+          <Button type="reset" className="text-sm/6 font-semibold text-white bg-red-500 hover:bg-red-400 disabled:bg-gray-300" onClick={allReset}>
+            Cancella
+          </Button>
           <Button
             type="submit"
-            className="disabled:bg-gray-300  rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+            className="disabled:bg-gray-300 rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-xs hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           >
             Crea
           </Button>
         </div>
       </div>
-
-      {/* Errori */}
-      {
-        state.message && (
-          <div className="mt-6 p-4 rounded-md bg-red-5 breadcrumb bg-red-50 border border-red-200">
-            <p className="text-sm font-medium text-red-800">{state.message}</p>
-            {state.ritornoObbligatorio &&
-              <span className=" text-sm font-medium text-red-800">
-                Clicca {' '}
-                <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}`} className="underline text-blue-400 hover:text-blue-500">
-                  qui {' '}
-                </Link>
-                per proseguire
-              </span>}
-          </div>
-        )
-      }
-    </form >
+    </form>
   );
 }

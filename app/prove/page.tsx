@@ -1,4 +1,5 @@
 import { neon } from "@neondatabase/serverless";
+import { formattaTimeStamp } from "../lib/utils";
 
 const sql = neon(process.env.DATABASE_URL || "");
 // --- TIPI TYPESCRIPT ---
@@ -23,6 +24,7 @@ function formatTime(timestamp: string | null): string {
   return date.toLocaleTimeString('it-IT', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: "Europe/Rome"
   });
 }
 
@@ -39,42 +41,38 @@ function getStatoStyle(stato: string): string {
 
 // --- DATA FETCHING (Sostituisci con la tua query al DB) ---
 async function getTreniDelGiorno(data: string): Promise<TrenoConTracce[]> {
-  /* 
-    Esempio con il tuo client PostgreSQL:
-    const rows = await sql<TrenoConTracce[]>`
-      SELECT t.data, t.codice, t.convoglio, t.stato, COALESCE(...) AS tracce
-      FROM public.treno t ...
-      WHERE t.data = ${data} ...
-    `;
-    return rows;
-  */
 
-  // Dati fittizi di esempio per visualizzare subito la UI
   try {
     const treni = await sql`
+    WITH 
+    tracce_unite AS (
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_passata
+    UNION ALL
+    SELECT orario_arrivo, orario_partenza, stazione, data, treno
+    FROM traccia_corrente
+   )
       SELECT 
       t.data,
       t.codice,
       t.convoglio,
-  t.stato,
-  COALESCE(
-    json_agg(
-      json_build_object(
-        'stazione', tc.stazione,
-        'orario_arrivo', tc.orario_arrivo,
-        'orario_partenza', tc.orario_partenza
-      )
+      t.stato,
+      COALESCE(
+        json_agg(
+        json_build_object(
+          'stazione', tc.stazione,
+          'orario_arrivo', tc.orario_arrivo,
+          'orario_partenza', tc.orario_partenza
+        )
       ORDER BY COALESCE(tc.orario_arrivo, tc.orario_partenza) ASC
-    ) FILTER (WHERE tc.stazione IS NOT NULL),
-    '[]'
-  ) AS tracce
-FROM public.treno t
-LEFT JOIN public.traccia_corrente tc 
+    ) FILTER (WHERE tc.stazione IS NOT NULL),'[]') AS tracce
+FROM treno t
+LEFT JOIN tracce_unite tc 
   ON tc.treno = t.codice 
   AND tc.data = t.data
-WHERE t.data = ${data}
+WHERE t.data <= ${data}
 GROUP BY t.data, t.codice, t.convoglio, t.stato
-ORDER BY t.codice ASC;
+ORDER BY t.data ASC;
     `;
     return treni as TrenoConTracce[];
   } catch (error) {
@@ -141,7 +139,7 @@ export default async function TreniPage({
                       treno.stato
                     )}`}
                   >
-                    {treno.stato}
+                    {formattaTimeStamp(treno.data)}
                   </span>
                 </div>
 
@@ -161,20 +159,18 @@ export default async function TreniPage({
                           <li key={traccia.stazione} className="ml-6 relative">
                             {/* Pallino sulla linea */}
                             <span
-                              className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-white ring-2 ${
-                                isPrima || isUltima
+                              className={`absolute -left-[31px] top-1 w-3.5 h-3.5 rounded-full border-2 border-white ring-2 ${isPrima || isUltima
                                   ? 'bg-slate-900 ring-slate-900/20'
                                   : 'bg-slate-400 ring-slate-200'
-                              }`}
+                                }`}
                             />
 
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                               <span
-                                className={`text-sm ${
-                                  isPrima || isUltima
+                                className={`text-sm ${isPrima || isUltima
                                     ? 'font-semibold text-slate-900'
                                     : 'font-medium text-slate-700'
-                                }`}
+                                  }`}
                               >
                                 {traccia.stazione}
                               </span>

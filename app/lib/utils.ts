@@ -8,6 +8,7 @@ import {
   TracciaCorrente,
   Treno,
 } from "./definitions";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -174,14 +175,12 @@ export function creaTimestamp(data: Date, orario: string | null): string | null 
 
   if (!orario) return null;
 
-  const [ore, minuti, secondi = 0] = orario.split(":").map(Number);
+  const dataISO = data.toISOString().slice(0, 10);
 
-  const dataLocale = new Date(data);
-
-  dataLocale.setHours(ore, minuti, secondi, 0);
-
-  // Converte in stringa ISO 8601 completa in UTC (es. "2026-11-13T12:15:00.000Z")
-  return dataLocale.toISOString();
+  return fromZonedTime(
+    `${dataISO}T${orario}`,
+    "Europe/Rome",
+  ).toISOString();
 }
 
 // restituisce la somma in minuti e i giorni aggiunti dall'orario iniziale
@@ -293,4 +292,15 @@ export function formattaTimeStamp(timestamp: string) {
     timeZone: "Europe/Rome"
   });
   return formattata;
+}
+
+export function estraiData(timestamp: string | Date | null): string | null {
+  if (!timestamp) return null;
+
+  const d = new Date(timestamp);
+  if (Number.isNaN(d.getTime())) {
+    throw new Error("Timestamp non valido");
+  }
+
+  return formatInTimeZone(d, "Europe/Rome", "yyyy-MM-dd");
 }

@@ -10,18 +10,21 @@ export default async function Page(props: {
     stazione: string;
     convoglio: string;
     codiceTreno: string;
-    orario_ritorno: string;
-    data_ritorno: string;
+    tempo_ritorno_min: string;
     codiceTreno_ritorno: string;
+    data_ritorno: string
   }>;
 }) {
   const searchParams = await props.searchParams;
+  //andata
   const data = searchParams?.data || "";
   const orario = searchParams?.orario || "";
   const stazione = searchParams?.stazione || "";
   const convoglio = searchParams?.convoglio || "";
   const codiceTreno = searchParams?.codiceTreno || "";
-  const orario_ritorno = searchParams?.orario_ritorno || "";
+
+  //ritorno
+  const tempo_ritorno_min = searchParams?.tempo_ritorno_min || "";
   const data_ritorno = searchParams?.data_ritorno || "";
   const codiceTreno_ritorno = searchParams?.codiceTreno_ritorno || "";
 
@@ -29,12 +32,13 @@ export default async function Page(props: {
 
   if (data_ritorno) {
     try {
-      treniDisponibili = await fetchTreniDisponibili(data);
+      treniDisponibili = await fetchTreniDisponibili(data_ritorno);
     } catch (error) {
-      alert(error);
+      console.error(error);
     }
   }
-  if (data && orario && stazione && convoglio && orario_ritorno && codiceTreno && data_ritorno) {
+
+  if (data && orario && stazione && convoglio && codiceTreno && tempo_ritorno_min) {
   }
   else {
     notFound();
@@ -47,9 +51,8 @@ export default async function Page(props: {
         stazione={stazione}
         convoglio={convoglio}
         codiceTreno={codiceTreno}
-        orario_ritorno={orario_ritorno}
-        data_ritorno={data_ritorno}
-        codiciTreni={treniDisponibili}
+        tempo_ritorno_min={tempo_ritorno_min}
+        treniDisponibili={treniDisponibili}
       />
 
     </main>

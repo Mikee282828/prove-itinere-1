@@ -89,7 +89,7 @@ export default function Form({
           {state.ritornoObbligatorio &&
             <span className=" text-sm font-medium text-red-800">
               Clicca {' '}
-              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&orario_ritorno=${state.inizioRitorno}&data_ritorno=${state.dataRitorno}`} className="underline text-blue-400 hover:text-blue-500">
+              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&tempo_ritorno_min=${state.inizioRitorno}`} className="underline text-blue-400 hover:text-blue-500">
                 qui {' '}
               </Link>
               per proseguire
@@ -329,7 +329,7 @@ export default function Form({
           {state.ritornoObbligatorio &&
             <span className=" text-sm font-medium text-red-800">
               Clicca {' '}
-              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&orario_ritorno=${state.inizioRitorno}&data_ritorno=${state.dataRitorno}`} 
+              <Link href={`/esercizio/crea-corsa-ritorno?${searchParams.toString()}&convoglio=${state.enteredFormData?.convoglio}&tempo_ritorno_min=${state.inizioRitorno}`} 
               className="underline text-blue-400 hover:text-blue-500">
                 qui {' '}
               </Link>
