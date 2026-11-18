@@ -5,7 +5,13 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import z from "zod";
 import { fetchComposizioniDisponibili, fetchStazioni } from "./data";
-import { differenzaInMinuti, distanzaStazioni, sommaMinuti } from "./utils";
+import {
+  creaTimestamp,
+  differenzaInMinuti,
+  distanzaStazioni,
+  formattaTimeStamp,
+  sommaMinutiTimestamp,
+} from "./utils";
 import { Stazione, Treno } from "./definitions";
 
 const sql = neon(process.env.DATABASE_URL || "");
@@ -283,8 +289,7 @@ export async function createCorsa(
       ON tr.data = treno.data 
      AND tr.treno = treno.codice
     WHERE 
-      ((tr.data = ${dati.data} AND tr.orario_partenza >= ${dati.orario}) -- orario e data a scelta
-      OR tr.data > ${dati.data}) -- data a scelta
+      (tr.orario_partenza >= ${creaTimestamp(new Date(dati.data), dati.orario)}) -- dopo un certo timestamp 
       AND treno.convoglio = ${dati.convoglio}    -- convoglio a scelta
       AND tr.stazione IN (${dati.stazione})    -- uno delle 2 stazioni terminali 
       AND tr.orario_arrivo IS NULL
@@ -299,7 +304,10 @@ export async function createCorsa(
       const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
 
       let subtrattaOccupata;
-      let orarioPartenza = dati.orario;
+      let orarioPartenza: string = creaTimestamp(
+        new Date(dati.data),
+        dati.orario,
+      ) as string;
 
       // se Torre Spaventa => parti normalmente altrimenti inverti l'ordine delle stazioni
 
@@ -312,7 +320,6 @@ export async function createCorsa(
       console.log(
         "-------Inizio ciclo per controllo delle subtratte in andata--------",
       );
-      let giorniTrascorsi = 0;
       for (let i = 0; i < minutiPerSubtratta.length; i++) {
         // Controlla se la subtratta è occupata
         console.log(
@@ -330,12 +337,11 @@ export async function createCorsa(
           -- Data
           AND data_treno >= ${dati.data}
           -- Orari che si intersicano
-          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])})
           ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
 
-        let tempSommaOrario;
         // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
         if (subtrattaOccupata.length > 0) {
           orarioPartenza = subtrattaOccupata[0].fine_occupazione;
@@ -360,11 +366,12 @@ export async function createCorsa(
           i--;
         } else {
           console.log(
-            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])}`,
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])}`,
           );
-          tempSommaOrario = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
-          orarioPartenza = tempSommaOrario[0] as string;
-          giorniTrascorsi += tempSommaOrario[1] as number;
+          orarioPartenza = sommaMinutiTimestamp(
+            orarioPartenza,
+            minutiPerSubtratta[i],
+          );
         }
       }
       console.log(
@@ -380,8 +387,6 @@ export async function createCorsa(
       );
 
       const inizioRitorno = orarioPartenza;
-      let dataRitorno = new Date(dati.data);
-      dataRitorno.setDate(dataRitorno.getDate() + giorniTrascorsi);
 
       for (let i = minutiPerSubtratta.length - 1; i >= 0; i--) {
         // Controlla se la subtratta è occupata
@@ -400,12 +405,11 @@ export async function createCorsa(
           -- Data
           AND data_treno >= ${dati.data}
           -- Orari che si intersichino
-          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])})
           ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
 
-        let tempSommaOrario;
         // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
         if (subtrattaOccupata.length > 0) {
           orarioPartenza = subtrattaOccupata[0].fine_occupazione;
@@ -430,83 +434,46 @@ export async function createCorsa(
           i++;
         } else {
           console.log(
-            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]}`,
+            `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])}`,
           );
-          tempSommaOrario = sommaMinuti(orarioPartenza, minutiPerSubtratta[i]);
-          orarioPartenza = tempSommaOrario[0] as string;
-          giorniTrascorsi += tempSommaOrario[1] as number;
+          orarioPartenza = sommaMinutiTimestamp(
+            orarioPartenza,
+            minutiPerSubtratta[i],
+          );
         }
       }
       console.log(
         "-------Fine ciclo per controllo delle subtratte di ritorno--------",
       );
 
-      const dataArrivoCalcolato = new Date(dati.data);
-      dataArrivoCalcolato.setDate(
-        dataArrivoCalcolato.getDate() + giorniTrascorsi,
-      );
-
       const differenza = differenzaInMinuti(
-        dataArrivoCalcolato,
         orarioPartenza,
-        trenoDopo[0].data,
         trenoDopo[0].partenza,
       );
 
       console.log(
-        `L'arrivo stimato del treno che si vuole creare nella stazione originale è alle: ${orarioPartenza} ${
-          dataArrivoCalcolato.getFullYear() +
-          "-" +
-          String(dataArrivoCalcolato.getMonth() + 1).padStart(2, "0") +
-          "-" +
-          String(dataArrivoCalcolato.getDate()).padStart(2, "0")
-        }`,
+        `L'arrivo stimato del treno che si vuole creare nella stazione originale è alle: ${orarioPartenza}`,
       );
       console.log(
-        `Mentre la partenza del primo treno che utilizza lo stesso convoglio nella stessa stazione è alle: ${trenoDopo[0].partenza} ${
-          trenoDopo[0].data.getFullYear() +
-          "-" +
-          String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
-          "-" +
-          String(trenoDopo[0].data.getDate()).padStart(2, "0")
-        }`,
+        `Mentre la partenza del primo treno che utilizza lo stesso convoglio nella stessa stazione è alle: ${trenoDopo[0].partenza}`,
       );
       console.log(
-        `La differenza in minuti tra l'arrivo stimato  del treno che si vuole creare e il primo treno che utilizza lo stesso convoglio nella stessa stazione è di ${differenza} minuti`,
+        `La differenza in minuti tra l'arrivo stimato del treno che si vuole creare e il primo treno che utilizza lo stesso convoglio nella stessa stazione è di ${differenza} minuti`,
       );
 
       if (differenza < 0) {
         return {
-          message: `Il convoglio selezionato non potrà tornare in tempo per il treno che parte alle ${trenoDopo[0].partenza} ${
-            trenoDopo[0].data.getFullYear() +
-            "-" +
-            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(trenoDopo[0].data.getDate()).padStart(2, "0")
-          }`,
+          message: `Il convoglio selezionato non potrà tornare in tempo per il treno: ${formattaTimeStamp(trenoDopo[0].partenza)}`,
           errors: {},
           enteredFormData: rawData,
         };
       } else {
         return {
-          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima delle ${trenoDopo[0].partenza} ${
-            trenoDopo[0].data.getFullYear() +
-            "-" +
-            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(trenoDopo[0].data.getDate()).padStart(2, "0")
-          }`,
+          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima di ${formattaTimeStamp(trenoDopo[0].partenza)}`,
           errors: {},
           enteredFormData: rawData,
           ritornoObbligatorio: true,
           inizioRitorno: inizioRitorno,
-          dataRitorno: `${
-            dataRitorno.getFullYear() +
-            "-" +
-            String(dataRitorno.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(dataRitorno.getDate()).padStart(2, "0")
-          }`,
         };
       }
     }
@@ -531,7 +498,10 @@ export async function createCorsa(
     const stazioni = await fetchStazioni();
     const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
     let subtrattaOccupata;
-    let orarioPartenza = dati.orario;
+    let orarioPartenza: string = creaTimestamp(
+      new Date(dati.data),
+      dati.orario,
+    ) as string;
 
     // se Torre Spaventa => parti normalmente altrimenti inverti l'ordine delle stazioni
 
@@ -560,7 +530,7 @@ export async function createCorsa(
           -- Data
           AND data_treno >= ${dati.data}
           -- Orari che si intersicano
-          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]})
+          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])})
           ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
@@ -586,7 +556,7 @@ export async function createCorsa(
         i--;
       } else {
         console.log(
-          `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]}`,
+          `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])}`,
         );
 
         // query di inserimento andata
@@ -600,13 +570,13 @@ export async function createCorsa(
                                         ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
         // subtratta
         transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
-                                    VALUES (${stazioni[i].nome},${stazioni[i + 1].nome},${orarioPartenza},${sommaMinuti(orarioPartenza, minutiPerSubtratta[i])[0]},${dati.codiceTreno},${dati.data});
+                                    VALUES (${stazioni[i].nome},${stazioni[i + 1].nome},${orarioPartenza},${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])},${dati.codiceTreno},${dati.data});
                 `);
 
-        orarioPartenza = sommaMinuti(
+        orarioPartenza = sommaMinutiTimestamp(
           orarioPartenza,
           minutiPerSubtratta[i],
-        )[0] as string;
+        );
 
         if (i === minutiPerSubtratta.length - 1) {
           transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
@@ -622,11 +592,6 @@ export async function createCorsa(
     console.log(
       "-------Fine ciclo per controllo delle subtratte in andata--------",
     );
-
-    // transactionQueries.forEach((q, index) => {
-    //   console.log(`--- Query #${index + 1} ---`);
-    //   console.log(q);
-    // });
 
     await sql.transaction(transactionQueries);
   } catch (error) {
@@ -932,25 +897,13 @@ export async function createCorsaWithRitorno(
 
       if (differenza < 0) {
         return {
-          message: `Il convoglio selezionato non potrà tornare in tempo per il treno che parte alle ${trenoDopo[0].partenza} ${
-            trenoDopo[0].data.getFullYear() +
-            "-" +
-            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(trenoDopo[0].data.getDate()).padStart(2, "0")
-          }`,
+          message: `Il convoglio selezionato non potrà tornare in tempo per il treno che parte ${formattaTimeStamp(trenoDopo[0].partenza)}`,
           errors: {},
           enteredFormData: rawData,
         };
       } else {
         return {
-          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima delle ${trenoDopo[0].partenza} ${
-            trenoDopo[0].data.getFullYear() +
-            "-" +
-            String(trenoDopo[0].data.getMonth() + 1).padStart(2, "0") +
-            "-" +
-            String(trenoDopo[0].data.getDate()).padStart(2, "0")
-          }`,
+          message: `Il treno selezionato ha bisogno della programmazione di un ritorno obbligatorio prima di ${formattaTimeStamp(trenoDopo[0].partenza)}`,
           errors: {},
           enteredFormData: rawData,
           ritornoObbligatorio: true,

@@ -7,6 +7,7 @@ import {
   Treno,
 } from "./definitions";
 import { neon } from "@neondatabase/serverless";
+import { creaTimestamp } from "./utils";
 
 const sql = neon(process.env.DATABASE_URL || "");
 
@@ -96,16 +97,14 @@ export async function fetchComposizioniDisponibili(
         -- Assegna 1 alla riga con data più recente e arrivo più tardivo
         ROW_NUMBER() OVER (
             PARTITION BY treno.convoglio
-            ORDER BY tr.data DESC, tr.orario_arrivo DESC
+            ORDER BY tr.orario_arrivo DESC
         ) AS rn
     FROM treno
     JOIN tracce_unite AS tr
       ON tr.data = treno.data 
      AND tr.treno = treno.codice
-    WHERE tr.data <= ${data}
-      AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
-      -- aggiunta di 'arrivo <= orario' qui permette di non escludere treni dello stesso giorno con un arrivo ultimo posteriore all'arrivo scelto
-      AND tr.orario_arrivo <= ${orario}
+    WHERE tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      AND tr.orario_arrivo <= ${creaTimestamp(new Date(data), orario)}
       AND tr.orario_arrivo IS NOT NULL
       AND tr.orario_partenza IS NULL
     ),
@@ -114,7 +113,7 @@ export async function fetchComposizioniDisponibili(
     WHERE id NOT IN (
     SELECT convoglio
     FROM dati_completi
-    WHERE rn = 1 AND (stazione <> ${stazione} OR (stazione=${stazione} AND arrivo>${orario})))
+    WHERE rn = 1 AND (stazione <> ${stazione} OR (stazione=${stazione} AND arrivo>${creaTimestamp(new Date(data), orario)})))
     )
     SELECT convoglio,json_agg(id_mat) as materiali FROM composizione
     WHERE convoglio IN (SELECT id FROM convogliDisponibili)
@@ -147,22 +146,21 @@ export async function fetchComposizioniDisponibili(
         -- Assegna 1 alla riga con data più recente e arrivo più tardivo
         ROW_NUMBER() OVER (
             PARTITION BY treno.convoglio
-            ORDER BY tr.data DESC, tr.orario_arrivo DESC
+            ORDER BY tr.orario_arrivo DESC
         ) AS rn
     FROM treno
     JOIN tracce_unite AS tr
       ON tr.data = treno.data 
      AND tr.treno = treno.codice
-    WHERE tr.data <= ${data}
-      AND tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
-      AND tr.orario_arrivo <= ${orario}
+    WHERE tr.stazione IN ('Torre Spaventa', 'Villa San Felice')
+      AND tr.orario_arrivo <= ${creaTimestamp(new Date(data), orario)}
       AND tr.orario_arrivo IS NOT NULL
       AND tr.orario_partenza IS NULL
     ),
     convogliDisponibili AS(
     SELECT convoglio AS id
     FROM dati_completi
-    WHERE rn = 1 AND (stazione=${stazione} AND arrivo<=${orario})
+    WHERE rn = 1 AND (stazione=${stazione} AND arrivo<=${creaTimestamp(new Date(data), orario)})
     )
     SELECT convoglio,json_agg(id_mat) as materiali FROM composizione
     WHERE convoglio IN (SELECT id FROM convogliDisponibili)
@@ -242,7 +240,9 @@ export async function fetchTreno(
   }
 }
 
-export async function fetchTreniDisponibili(data: string) : Promise<CodiciTreno>{
+export async function fetchTreniDisponibili(
+  data: string,
+): Promise<CodiciTreno> {
   try {
     const codici = await sql`
       SELECT codice
@@ -260,3 +260,4 @@ export async function fetchTreniDisponibili(data: string) : Promise<CodiciTreno>
     throw new Error("Failed to fetch data.");
   }
 }
+

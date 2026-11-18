@@ -1,52 +1,50 @@
 // utility functions
-import { clsx, type ClassValue } from 'clsx'
-import { twMerge } from 'tailwind-merge'
-import { NomiStazioni, Stazione, Subtratta, TracciaCorrente, Treno } from './definitions';
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import {
+  NomiStazioni,
+  Stazione,
+  Subtratta,
+  TracciaCorrente,
+  Treno,
+} from "./definitions";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 const modelloGiornaliero = [
   // ANDATA
-  { stazione: "Torre Spaventa", arrivo: null, partenza: "10:43:00"},
-  { stazione: "Prato Terra", arrivo: "10:55:00", partenza: "10:57:00"},
-  { stazione: "Rocca Pietrosa", arrivo: "11:12:00", partenza: "11:15:00"},
-  { stazione: "Villa Pietrosa", arrivo: "11:25:00", partenza: "11:27:00"},
-  { stazione: "Villa Santa Maria", arrivo: "11:40:00", partenza: "11:42:00"},
-  { stazione: "Pietra Santa Maria", arrivo: "11:55:00", partenza: "11:58:00"},
-  { stazione: "Castro Marino", arrivo: "12:10:00", partenza: "12:12:00"},
-  { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00"},
-  { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00"},
-  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: null},
+  { stazione: "Torre Spaventa", arrivo: null, partenza: "10:43:00" },
+  { stazione: "Prato Terra", arrivo: "10:55:00", partenza: "10:57:00" },
+  { stazione: "Rocca Pietrosa", arrivo: "11:12:00", partenza: "11:15:00" },
+  { stazione: "Villa Pietrosa", arrivo: "11:25:00", partenza: "11:27:00" },
+  { stazione: "Villa Santa Maria", arrivo: "11:40:00", partenza: "11:42:00" },
+  { stazione: "Pietra Santa Maria", arrivo: "11:55:00", partenza: "11:58:00" },
+  { stazione: "Castro Marino", arrivo: "12:10:00", partenza: "12:12:00" },
+  { stazione: "Porto Spigola", arrivo: "12:22:00", partenza: "12:25:00" },
+  { stazione: "Porto San Felice", arrivo: "12:38:00", partenza: "12:40:00" },
+  { stazione: "Villa San Felice", arrivo: "12:55:00", partenza: null },
 ];
 
 const modelloGiornalieroRitorno = [
   // RITORNO
-  { stazione: "Villa San Felice", arrivo: null, partenza: "13:15:00"},
-  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00"},
-  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:48:00"},
-  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00"},
-  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00"},
-  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00"},
-  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00"},
-  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00"},
-  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00"},
-  { stazione: "Torre Spaventa", arrivo: "15:27:00", partenza: null},
+  { stazione: "Villa San Felice", arrivo: null, partenza: "13:15:00" },
+  { stazione: "Porto San Felice", arrivo: "13:30:00", partenza: "13:32:00" },
+  { stazione: "Porto Spigola", arrivo: "13:45:00", partenza: "13:48:00" },
+  { stazione: "Castro Marino", arrivo: "13:58:00", partenza: "14:00:00" },
+  { stazione: "Pietra Santa Maria", arrivo: "14:12:00", partenza: "14:15:00" },
+  { stazione: "Villa Santa Maria", arrivo: "14:28:00", partenza: "14:30:00" },
+  { stazione: "Villa Pietrosa", arrivo: "14:43:00", partenza: "14:45:00" },
+  { stazione: "Rocca Pietrosa", arrivo: "14:55:00", partenza: "14:58:00" },
+  { stazione: "Prato Terra", arrivo: "15:13:00", partenza: "15:15:00" },
+  { stazione: "Torre Spaventa", arrivo: "15:27:00", partenza: null },
 ];
 
-function creaTimestampOccupazione(data: Date, orario: string | null): string | null {
-  if (orario === null) return null;
-  return `${data.toISOString().slice(0, 10)}T${orario}Z`;
-}
-
-function creaTimestampTraccia(data: Date, orario: string | null): string | null {
-  if (orario === null) return null;
-  return `${data.toISOString().slice(0, 10)}T${orario}`;
-}
-
-export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[] {
-
+export function generaTracce(
+  dataInizio: Date,
+  dataFine: Date,
+): TracciaCorrente[] {
   if (dataInizio > dataFine) {
     const temp: Date = dataInizio;
     dataInizio = dataFine;
@@ -54,14 +52,20 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
   }
 
   const tutteLeTracce: TracciaCorrente[] = [];
-  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
-    const dataTraccia = new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni);
+  for (
+    let giorni = 0;
+    giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24);
+    giorni++
+  ) {
+    const dataTraccia = new Date(
+      dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni,
+    );
 
     modelloGiornaliero.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
-        orario_arrivo: creaTimestampTraccia(dataTraccia, modello.arrivo),
-        orario_partenza: creaTimestampTraccia(dataTraccia, modello.partenza),
+        orario_arrivo: creaTimestamp(dataTraccia, modello.arrivo),
+        orario_partenza: creaTimestamp(dataTraccia, modello.partenza),
         data: new Date(dataTraccia.getTime()),
         treno: 1,
       });
@@ -70,20 +74,19 @@ export function generaTracce(dataInizio: Date, dataFine: Date): TracciaCorrente[
     modelloGiornalieroRitorno.forEach((modello) => {
       tutteLeTracce.push({
         stazione: modello.stazione,
-        orario_arrivo: creaTimestampTraccia(dataTraccia, modello.arrivo),
-        orario_partenza: creaTimestampTraccia(dataTraccia, modello.partenza),
+        orario_arrivo: creaTimestamp(dataTraccia, modello.arrivo),
+        orario_partenza: creaTimestamp(dataTraccia, modello.partenza),
         data: new Date(dataTraccia.getTime()),
         treno: 2,
       });
     });
   }
 
-  console.log(tutteLeTracce)
+  console.log(tutteLeTracce);
   return tutteLeTracce;
 }
 
 export function generaTreno(dataInizio: Date, dataFine: Date): Treno[] {
-
   if (dataInizio > dataFine) {
     const temp: Date = dataInizio;
     dataInizio = dataFine;
@@ -92,20 +95,24 @@ export function generaTreno(dataInizio: Date, dataFine: Date): Treno[] {
 
   const treni: Treno[] = [];
 
-  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
+  for (
+    let giorni = 0;
+    giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24);
+    giorni++
+  ) {
     treni.push({
       codice: 1,
-      data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+      data: new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
       convoglio: 1,
     });
 
     treni.push({
       codice: 2,
-      data: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+      data: new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
       convoglio: 1,
     });
   }
-  return treni
+  return treni;
 }
 
 export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
@@ -116,86 +123,128 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
   }
 
   const subtratte: Subtratta[] = [];
-  for (let giorni = 0; giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24); giorni++) {
-
-    for (let i = 0; i < (modelloGiornaliero.length-1); i++) {
+  for (
+    let giorni = 0;
+    giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24);
+    giorni++
+  ) {
+    for (let i = 0; i < modelloGiornaliero.length - 1; i++) {
       subtratte.push({
         stazione_a: modelloGiornaliero[i].stazione as NomiStazioni,
-        stazione_b: modelloGiornaliero[i+1].stazione as NomiStazioni,
-        inizio_occupazione: creaTimestampOccupazione(
-          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+        stazione_b: modelloGiornaliero[i + 1].stazione as NomiStazioni,
+        inizio_occupazione: creaTimestamp(
+          new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
           modelloGiornaliero[i].partenza,
         ),
-        fine_occupazione: creaTimestampOccupazione(
-          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
-          modelloGiornaliero[i+1].arrivo,
+        fine_occupazione: creaTimestamp(
+          new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
+          modelloGiornaliero[i + 1].arrivo,
         ),
         codice_treno: 1,
-        data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
+        data_treno: new Date(
+          dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni,
+        ),
       });
     }
 
-    for (let i = 0; i < (modelloGiornalieroRitorno.length-1); i++) {
+    for (let i = 0; i < modelloGiornalieroRitorno.length - 1; i++) {
       subtratte.push({
         stazione_a: modelloGiornalieroRitorno[i].stazione as NomiStazioni,
-        stazione_b: modelloGiornalieroRitorno[i+1].stazione as NomiStazioni,
-        inizio_occupazione: creaTimestampOccupazione(
-          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
+        stazione_b: modelloGiornalieroRitorno[i + 1].stazione as NomiStazioni,
+        inizio_occupazione: creaTimestamp(
+          new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
           modelloGiornalieroRitorno[i].partenza,
         ),
-        fine_occupazione: creaTimestampOccupazione(
-          new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni),
-          modelloGiornalieroRitorno[i+1].arrivo,
+        fine_occupazione: creaTimestamp(
+          new Date(dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni),
+          modelloGiornalieroRitorno[i + 1].arrivo,
         ),
         codice_treno: 2,
-        data_treno: new Date(dataInizio.getTime() + (24 * 60 * 60 * 1000) * giorni)
+        data_treno: new Date(
+          dataInizio.getTime() + 24 * 60 * 60 * 1000 * giorni,
+        ),
       });
     }
-
   }
-  return subtratte
+  return subtratte;
 }
 
 // gestione orari
+export function creaTimestamp(data: Date, orario: string | null): string | null {
+
+  if (!orario) return null;
+
+  const [ore, minuti, secondi = 0] = orario.split(":").map(Number);
+
+  const dataLocale = new Date(data);
+
+  dataLocale.setHours(ore, minuti, secondi, 0);
+
+  // Converte in stringa ISO 8601 completa in UTC (es. "2026-11-13T12:15:00.000Z")
+  return dataLocale.toISOString();
+}
+
 // restituisce la somma in minuti e i giorni aggiunti dall'orario iniziale
-export function sommaMinuti(orario: string, minutiDaAggiungere: number | string) {
-  // 1. Uniformiamo la virgola in punto se viene passata una stringa (es. "3,5" -> 3.5)
-  const minutiFloat = typeof minutiDaAggiungere === "string" 
-    ? parseFloat(minutiDaAggiungere.replace(",", ".")) 
-    : minutiDaAggiungere;
+// export function sommaMinuti(
+//   orario: string,
+//   minutiDaAggiungere: number | string,
+// ) {
+//   // 1. Uniformiamo la virgola in punto se viene passata una stringa (es. "3,5" -> 3.5)
+//   const minutiFloat =
+//     typeof minutiDaAggiungere === "string"
+//       ? parseFloat(minutiDaAggiungere.replace(",", "."))
+//       : minutiDaAggiungere;
 
-  // 2. Convertiamo i minuti decimali in secondi totali (es. 3.5 * 60 = 210 secondi)
-  const secondiDaAggiungere = Math.round(minutiFloat * 60);
+//   // 2. Convertiamo i minuti decimali in secondi totali (es. 3.5 * 60 = 210 secondi)
+//   const secondiDaAggiungere = Math.round(minutiFloat * 60);
 
-  // 3. Dividiamo l'orario di ingresso ("hh:mm" o "hh:mm:ss")
-  const parti = orario.split(":");
-  const ore = parseInt(parti[0], 10);
-  const minuti = parseInt(parti[1], 10);
-  const secondi = parti[2] ? parseInt(parti[2], 10) : 0;
+//   // 3. Dividiamo l'orario di ingresso ("hh:mm" o "hh:mm:ss")
+//   const parti = orario.split(":");
+//   const ore = parseInt(parti[0], 10);
+//   const minuti = parseInt(parti[1], 10);
+//   const secondi = parti[2] ? parseInt(parti[2], 10) : 0;
 
-  // 4. Calcoliamo i secondi totali dall'inizio del giorno
-  // Un giorno intero ha 86400 secondi (24 * 60 * 60)
-  let secondiTotali = (ore * 3600) + (minuti * 60) + secondi + secondiDaAggiungere;
-  const differenzaGiorni = Math.floor(secondiTotali / 86400)
+//   // 4. Calcoliamo i secondi totali dall'inizio del giorno
+//   // Un giorno intero ha 86400 secondi (24 * 60 * 60)
+//   let secondiTotali = ore * 3600 + minuti * 60 + secondi + secondiDaAggiungere;
+//   const differenzaGiorni = Math.floor(secondiTotali / 86400);
 
-  // 5. Gestiamo il cambio di giorno (modulo 86400)
-  secondiTotali = secondiTotali % 86400;
-  if (secondiTotali < 0) {
-    secondiTotali += 86400;
+//   // 5. Gestiamo il cambio di giorno (modulo 86400)
+//   secondiTotali = secondiTotali % 86400;
+//   if (secondiTotali < 0) {
+//     secondiTotali += 86400;
+//   }
+
+//   // 6. Ricalcoliamo ore, minuti e secondi finali
+//   const nuoveOre = Math.floor(secondiTotali / 3600);
+//   const restoOre = secondiTotali % 3600;
+//   const nuoviMinuti = Math.floor(restoOre / 60);
+//   const nuoviSecondi = restoOre % 60;
+
+//   // 7. Formattiamo in "hh:mm:ss"
+//   const hh = String(nuoveOre).padStart(2, "0");
+//   const mm = String(nuoviMinuti).padStart(2, "0");
+//   const ss = String(nuoviSecondi).padStart(2, "0");
+
+//   return [`${hh}:${mm}:${ss}`, differenzaGiorni];
+// }
+
+export function sommaMinutiTimestamp(
+  timestamp: string,
+  minutiDaAggiungere: number | string,
+): string {
+  const minuti =
+    typeof minutiDaAggiungere === "string"
+      ? parseFloat(minutiDaAggiungere.replace(",", "."))
+      : minutiDaAggiungere;
+  const data = new Date(timestamp);
+
+  if (!Number.isFinite(data.getTime()) || !Number.isFinite(minuti)) {
+    throw new Error("Timestamp o minuti non validi");
   }
 
-  // 6. Ricalcoliamo ore, minuti e secondi finali
-  const nuoveOre = Math.floor(secondiTotali / 3600);
-  const restoOre = secondiTotali % 3600;
-  const nuoviMinuti = Math.floor(restoOre / 60);
-  const nuoviSecondi = restoOre % 60;
-
-  // 7. Formattiamo in "hh:mm:ss"
-  const hh = String(nuoveOre).padStart(2, "0");
-  const mm = String(nuoviMinuti).padStart(2, "0");
-  const ss = String(nuoviSecondi).padStart(2, "0");
-
-  return [`${hh}:${mm}:${ss}`,differenzaGiorni];
+  data.setTime(data.getTime() + Math.round(minuti * 60_000));
+  return data.toISOString();
 }
 
 function giornoPrecedente(data: string): string {
@@ -210,60 +259,38 @@ function giornoPrecedente(data: string): string {
 }
 
 export function differenzaInMinuti(
-	date1: Date,
-	time1: string,
-	date2: Date,
-	time2: string,
+  timestamp1: string,
+  timestamp2: string,
 ): number {
-  const toDate = (date: Date, time: string): Date => {
-    const timeParts = time.split(":").map(Number); // HH:mm or HH:mm:ss
+  const start = new Date(timestamp1);
+  const end = new Date(timestamp2);
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+    throw new Error("Invalid timestamp.");
+  }
 
-    if (!(date instanceof Date) || !Number.isFinite(date.getTime())) {
-      throw new Error("Invalid date.");
-    }
-    if (
-      (timeParts.length !== 2 && timeParts.length !== 3) ||
-      timeParts.some((part) => !Number.isInteger(part))
-    ) {
-      throw new Error("Use time format HH:mm or HH:mm:ss.");
-    }
-
-    const [hour, minute, second = 0] = timeParts;
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) {
-      throw new Error("Invalid time.");
-    }
-
-    const result = new Date(
-      date.getFullYear(),
-      date.getMonth(),
-      date.getDate(),
-      hour,
-      minute,
-      second,
-    );
-
-		if (
-			!Number.isFinite(result.getTime()) ||
-			result.getHours() !== hour ||
-      result.getMinutes() !== minute ||
-      result.getSeconds() !== second
-		) {
-      throw new Error("Invalid local date or time.");
-		}
-
-		return result;
-	};
-
-	const start = toDate(date1, time1);
-	const end = toDate(date2, time2);
-	return (end.getTime() - start.getTime()) / 60_000;
+  return (end.getTime() - start.getTime()) / 60_000;
 }
 
-export async function distanzaStazioni(speed: number, stazioni:Stazione[]): Promise<number[]> {
-    const tempi = [];
-    for (let i = 1; i < stazioni.length; i++) {
-      tempi.push(((stazioni[i].km - stazioni[i - 1].km) * 60) / speed);
-    }
-    console.log(tempi);
-    return tempi;
+export async function distanzaStazioni(
+  speed: number,
+  stazioni: Stazione[],
+): Promise<number[]> {
+  const tempi = [];
+  for (let i = 1; i < stazioni.length; i++) {
+    tempi.push(((stazioni[i].km - stazioni[i - 1].km) * 60) / speed);
   }
+  console.log(tempi);
+  return tempi;
+}
+
+export function formattaTimeStamp(timestamp: string) {
+  const formattata = new Date(timestamp).toLocaleString("it-IT", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Rome"
+  });
+  return formattata;
+}
