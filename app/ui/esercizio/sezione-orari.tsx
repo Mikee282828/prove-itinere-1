@@ -1,20 +1,17 @@
 "use client";
 
 import { Stazione, TracciaCorrente } from "@/app/lib/definitions";
-import { formatOrario, parseTimeToMinutes } from "@/app/lib/utils";
 import Search from "./cerca/searchTreno";
 import DiagrammaSpazioTempo from "./diagramma-spazio-tempo";
+import TabellaOrarioFerroviario from "./tabella-orario-ferroviario";
 import Link from "next/link";
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Activity,
   Table as TableIcon,
   Calendar,
   TrainIcon,
-  Clock,
-  ArrowRight,
-  ArrowLeft,
 } from "lucide-react";
 
 export default function SezioneOrari({
@@ -28,47 +25,7 @@ export default function SezioneOrari({
 }) {
   const searchParams = useSearchParams();
   const dataTreno = searchParams.get("dataTreno") || "";
-  const [vista, setVista] = useState<"diagramma" | "tabella">("diagramma");
-
-  // Smistamento tracce per la visualizzazione tabellare
-  const { treniAndata, treniRitorno } = useMemo(() => {
-    if (!tracce || tracce.length === 0) {
-      return { treniAndata: [], treniRitorno: [] };
-    }
-    const perTreno = new Map<number, TracciaCorrente[]>();
-    tracce.forEach((tr) => {
-      const arr = perTreno.get(tr.treno) || [];
-      arr.push(tr);
-      perTreno.set(tr.treno, arr);
-    });
-
-    const andata: TracciaCorrente[][] = [];
-    const ritorno: TracciaCorrente[][] = [];
-
-    perTreno.forEach((arr) => {
-      const sorted = [...arr].sort((a, b) => {
-        const timeA =
-          parseTimeToMinutes(a.orario_partenza) ??
-          parseTimeToMinutes(a.orario_arrivo) ??
-          0;
-        const timeB =
-          parseTimeToMinutes(b.orario_partenza) ??
-          parseTimeToMinutes(b.orario_arrivo) ??
-          0;
-        return timeA - timeB;
-      });
-      if (sorted[0]?.stazione === "Torre Spaventa") {
-        andata.push(sorted);
-      } else {
-        ritorno.push(sorted);
-      }
-    });
-
-    return {
-      treniAndata: andata.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),
-      treniRitorno: ritorno.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),
-    };
-  }, [tracce]);
+  const [vista, setVista] = useState<"diagramma" | "tabella">("tabella");
 
   if (!active) return null;
 
@@ -96,10 +53,22 @@ export default function SezioneOrari({
         </div>
       </div>
 
-      {/* Switcher di vista (Diagramma Spazio-Tempo vs Tabella Orari) */}
+      {/* Switcher di vista (Tabella Orario Ufficiale vs Diagramma Spazio-Tempo) */}
       {tracce !== null && tracce.length > 0 && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-200 pb-3">
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setVista("tabella")}
+              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
+                vista === "tabella"
+                  ? "bg-lime-900 text-white shadow-xs"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              <TableIcon className="h-4 w-4" />
+              Tabella Orari Ufficiale
+            </button>
             <button
               type="button"
               onClick={() => setVista("diagramma")}
@@ -112,23 +81,11 @@ export default function SezioneOrari({
               <Activity className="h-4 w-4" />
               Diagramma Spazio-Tempo
             </button>
-            <button
-              type="button"
-              onClick={() => setVista("tabella")}
-              className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold transition cursor-pointer ${
-                vista === "tabella"
-                  ? "bg-lime-900 text-white shadow-xs"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              <TableIcon className="h-4 w-4" />
-              Tabella Orari
-            </button>
           </div>
 
           <div className="text-xs text-gray-500">
-            Data orario: <strong>{dataTreno}</strong> &bull; Corse attive:{" "}
-            <strong>{treniAndata.length + treniRitorno.length}</strong>
+            Data orario: <strong>{dataTreno}</strong> &bull; Fermate totali:{" "}
+            <strong>{tracce.length}</strong>
           </div>
         </div>
       )}
@@ -141,7 +98,7 @@ export default function SezioneOrari({
             Nessuna data selezionata
           </h3>
           <p className="text-sm text-gray-500 max-w-md mx-auto mb-4">
-            Seleziona una data nella barra in alto oppure carica la data di prova (2070-01-01) per visualizzare il diagramma spazio-tempo delle corse ferroviarie.
+            Seleziona una data nella barra in alto oppure carica la data di prova (2070-01-01) per visualizzare l&apos;orario ferroviario.
           </p>
           <Link
             href="/esercizio?dataTreno=2070-01-01"
@@ -161,130 +118,22 @@ export default function SezioneOrari({
         </div>
       )}
 
-      {/* VISTA 1: DIAGRAMMA SPATIO-TEMPO */}
-      {vista === "diagramma" && tracce && tracce.length > 0 && (
-        <DiagrammaSpazioTempo
+      {/* VISTA 1: TABELLA ORARIO FERROVIARIO */}
+      {vista === "tabella" && tracce && tracce.length > 0 && (
+        <TabellaOrarioFerroviario
           tracce={tracce}
           stazioni={stazioni}
           dataSelezionata={dataTreno}
         />
       )}
 
-      {/* VISTA 2: TABELLA ORARI TRADIZIONALE */}
-      {vista === "tabella" && tracce && tracce.length > 0 && (
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 overflow-x-auto space-y-6">
-          <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Clock className="h-4 w-4 text-lime-900" />
-              Tabellone Orario Dettagliato
-            </h3>
-            <span className="text-xs text-gray-500">
-              Formato orari: hh:mm
-            </span>
-          </div>
-
-          <div className="flex flex-col lg:flex-row gap-8 justify-center">
-            {/* Treni Andata (Torre Spaventa -> Villa San Felice) */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-sm text-blue-800 border-b pb-2">
-                <ArrowRight className="h-4 w-4" />
-                Treni di Andata (Torre Spaventa ➔ Villa San Felice)
-              </div>
-              {treniAndata.length === 0 ? (
-                <p className="text-xs text-gray-400 py-4">Nessun treno di andata in questa data.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-xs divide-y divide-gray-200 text-center">
-                    <thead>
-                      <tr className="bg-blue-50">
-                        <th className="py-2 px-3 font-semibold text-gray-700 text-left">Stazione</th>
-                        {treniAndata.map((t, idx) => (
-                          <th key={idx} className="py-2 px-2 font-bold text-blue-700 border-l border-gray-200">
-                            Treno {t[0]?.treno}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {stazioni?.map((s) => (
-                        <tr key={s.nome} className="hover:bg-gray-50">
-                          <td className="py-1.5 px-3 font-medium text-gray-800 text-left whitespace-nowrap">
-                            {s.nome}
-                          </td>
-                          {treniAndata.map((t, tIdx) => {
-                            const tr = t.find((item) => item.stazione === s.nome);
-                            return (
-                              <td key={tIdx} className="py-1.5 px-2 font-mono border-l border-gray-100 text-gray-600">
-                                {tr ? (
-                                  <div>
-                                    {formatOrario(tr.orario_arrivo)} /{" "}
-                                    {formatOrario(tr.orario_partenza)}
-                                  </div>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-
-            {/* Treni Ritorno (Villa San Felice -> Torre Spaventa) */}
-            <div className="flex-1 space-y-2">
-              <div className="flex items-center gap-1.5 font-bold text-sm text-red-800 border-b pb-2">
-                <ArrowLeft className="h-4 w-4" />
-                Treni di Ritorno (Villa San Felice ➔ Torre Spaventa)
-              </div>
-              {treniRitorno.length === 0 ? (
-                <p className="text-xs text-gray-400 py-4">Nessun treno di ritorno in questa data.</p>
-              ) : (
-                <div className="overflow-x-auto">
-                  <table className="min-w-full text-xs divide-y divide-gray-200 text-center">
-                    <thead>
-                      <tr className="bg-red-50">
-                        <th className="py-2 px-3 font-semibold text-gray-700 text-left">Stazione</th>
-                        {treniRitorno.map((t, idx) => (
-                          <th key={idx} className="py-2 px-2 font-bold text-red-700 border-l border-gray-200">
-                            Treno {t[0]?.treno}
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-100">
-                      {[...(stazioni ?? [])].reverse().map((s) => (
-                        <tr key={s.nome} className="hover:bg-gray-50">
-                          <td className="py-1.5 px-3 font-medium text-gray-800 text-left whitespace-nowrap">
-                            {s.nome}
-                          </td>
-                          {treniRitorno.map((t, tIdx) => {
-                            const tr = t.find((item) => item.stazione === s.nome);
-                            return (
-                              <td key={tIdx} className="py-1.5 px-2 font-mono border-l border-gray-100 text-gray-600">
-                                {tr ? (
-                                  <div>
-                                    {formatOrario(tr.orario_arrivo)} /{" "}
-                                    {formatOrario(tr.orario_partenza)}
-                                  </div>
-                                ) : (
-                                  "-"
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+      {/* VISTA 2: DIAGRAMMA SPATIO-TEMPO */}
+      {vista === "diagramma" && tracce && tracce.length > 0 && (
+        <DiagrammaSpazioTempo
+          tracce={tracce}
+          stazioni={stazioni}
+          dataSelezionata={dataTreno}
+        />
       )}
     </div>
   );
