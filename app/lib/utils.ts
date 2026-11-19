@@ -304,3 +304,84 @@ export function estraiData(timestamp: string | Date | null): string | null {
 
   return formatInTimeZone(d, "Europe/Rome", "yyyy-MM-dd");
 }
+
+export function parseTimeToMinutes(
+  val: string | Date | null | undefined,
+): number | null {
+  if (!val) return null;
+
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return null;
+    const formatter = new Intl.DateTimeFormat("it-IT", {
+      timeZone: "Europe/Rome",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(val);
+    const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+    const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+    const s = parseInt(parts.find((p) => p.type === "second")?.value || "0", 10);
+    return h * 60 + m + s / 60;
+  }
+
+  const str = String(val).trim();
+  if (str.includes("T") || str.includes("-")) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      const formatter = new Intl.DateTimeFormat("it-IT", {
+        timeZone: "Europe/Rome",
+        hour: "numeric",
+        minute: "numeric",
+        second: "numeric",
+        hour12: false,
+      });
+      const parts = formatter.formatToParts(d);
+      const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+      const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+      const s = parseInt(parts.find((p) => p.type === "second")?.value || "0", 10);
+      return h * 60 + m + s / 60;
+    }
+  }
+
+  const match = str.match(/(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+  if (match) {
+    const h = parseInt(match[1], 10);
+    const m = parseInt(match[2], 10);
+    const s = match[3] ? parseInt(match[3], 10) : 0;
+    return h * 60 + m + s / 60;
+  }
+
+  return null;
+}
+
+export function formatOrario(val: string | Date | null | undefined): string {
+  if (!val) return "-";
+  if (val instanceof Date) {
+    if (isNaN(val.getTime())) return "-";
+    return new Intl.DateTimeFormat("it-IT", {
+      timeZone: "Europe/Rome",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(val);
+  }
+  const str = String(val).trim();
+  if (str.includes("T") || str.includes("-")) {
+    const d = new Date(str);
+    if (!isNaN(d.getTime())) {
+      return new Intl.DateTimeFormat("it-IT", {
+        timeZone: "Europe/Rome",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      }).format(d);
+    }
+  }
+  const match = str.match(/(\d{1,2}):(\d{2})/);
+  if (match) {
+    return `${match[1].padStart(2, "0")}:${match[2]}`;
+  }
+  return str.slice(0, 5);
+}
