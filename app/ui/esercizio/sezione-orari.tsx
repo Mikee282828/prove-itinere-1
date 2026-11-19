@@ -152,7 +152,7 @@ export default function SezioneOrari({
 }) {
   if(active)
   return(
-    <div>
+    <div className="p-8">
       <Search />
     </div>
   )
