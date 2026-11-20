@@ -220,7 +220,7 @@ export async function createCorsa(
 
   //#daFare
   // * 1se il convoglio è effetivamente disponibile
-  // *(manca la creazione forzata del ritorno) 2se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
+  // * 2se il convoglio deve essere riportato indietro entro un tempo limite => avvisa e obbliga il ritorno
   // *(gestire il caso di cambio giorno) 3se il convoglio è disponibile e senza vincoli allora crealo
 
   // Controlla se ci sono treni con lo stesso codice e data di quello che si vuole creare
@@ -370,11 +370,18 @@ export async function createCorsa(
         "-------Inizio ciclo per controllo delle subtratte di ritorno--------",
       );
 
-      // Il treno è arrivato alla stazione opposta a orarioPartenza
+      // Il treno è arrivato alla stazione opposta alla stazione iniziale
+      // Salva l'orario di arrivo alla stazione opposta
       const arrivoAndata = orarioPartenza;
 
       // CASO A: il convoglio ha già una partenza dalla stazione opposta => verrà riportato
       // indietro da quel treno. Basta che il nuovo treno ci arrivi prima.
+
+      // Premettendo che i treni in questione usano tutti lo stesso convoglio: 
+      // Il caso in questione avviene solo se c'è un errore di inserimento, cioè una partenza dalla stazione opposta di un treno che non è mai arrivato
+      // poiché altrimenti ci dovrebbe essere un treno che parta dopo l'orario stabilito ma prima dell'orario di ritorno
+      // del treno che parte dalla stazione opposta percui la prima prossima stazione è per forza un treno che parte dalla stessa stazione di quello da creare
+
       if (prossima.stazione !== dati.stazione) {
         const margine = differenzaInMinuti(arrivoAndata, prossima.partenza);
         if (margine < 0) {
@@ -490,7 +497,8 @@ export async function createCorsa(
     const stazioni = await fetchStazioni();
     const minutiPerSubtratta = await distanzaStazioni(50, stazioni);
     let subtrattaOccupata;
-    let orarioPartenza: string = creaTimestamp(
+    let orarioArrivoCorrente: string | null = null;
+    let orarioPartenzaCorrente: string = creaTimestamp(
       new Date(dati.data),
       dati.orario,
     ) as string;
@@ -513,6 +521,11 @@ export async function createCorsa(
       console.log("index = " + i);
       console.log(`Subtratta: ${stazioni[i].nome} - ${stazioni[i + 1].nome}`);
 
+      const fineStimata = sommaMinutiTimestamp(
+        orarioPartenzaCorrente,
+        minutiPerSubtratta[i],
+      );
+
       subtrattaOccupata = await sql`
           SELECT * FROM subtratta 
           WHERE 
@@ -521,17 +534,17 @@ export async function createCorsa(
           OR (stazione_a = ${stazioni[i + 1].nome} AND stazione_b = ${stazioni[i].nome}))
           -- Data
           AND data_treno >= ${dati.data}
-          -- Orari che si intersicano
-          AND (fine_occupazione>${orarioPartenza} AND inizio_occupazione<${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])})
+          -- Orari che si intersecano
+          AND (fine_occupazione>${orarioPartenzaCorrente} AND inizio_occupazione<${fineStimata})
           ORDER BY data_treno,inizio_occupazione
           LIMIT 1;
         `;
 
       // Se la subtratta è occupata allora riassegna la partenza e riitera sulla stessa subtratta
       if (subtrattaOccupata.length > 0) {
-        orarioPartenza = subtrattaOccupata[0].fine_occupazione;
+        orarioPartenzaCorrente = subtrattaOccupata[0].fine_occupazione;
         console.log(
-          `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenza}`,
+          `Subtratta occupante: ${subtrattaOccupata[0].inizio_occupazione} - ${subtrattaOccupata[0].fine_occupazione}, nuovo tempo di partenza: ${orarioPartenzaCorrente}`,
         );
         console.log(
           "Data treno: " +
@@ -548,32 +561,30 @@ export async function createCorsa(
         i--;
       } else {
         console.log(
-          `Subtratta non occupata, tempo di partenza: ${orarioPartenza}, tempo di arrivo: ${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])}`,
+          `Subtratta non occupata, tempo di partenza: ${orarioPartenzaCorrente}, tempo di arrivo: ${fineStimata}`,
         );
 
         // query di inserimento andata
         //traccia
         transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
                                         VALUES (
-                                        ${i > 0 ? orarioPartenza : null},
-                                        ${orarioPartenza},
+                                        ${orarioArrivoCorrente},
+                                        ${orarioPartenzaCorrente},
                                         ${stazioni[i].nome},
                                         ${dati.codiceTreno},
                                         ${dati.data}) ON CONFLICT (treno,data,stazione) DO NOTHING;`);
         // subtratta
         transactionQueries.push(sql`INSERT INTO subtratta (stazione_a, stazione_b, inizio_occupazione, fine_occupazione, codice_treno, data_treno)
-                                    VALUES (${stazioni[i].nome},${stazioni[i + 1].nome},${orarioPartenza},${sommaMinutiTimestamp(orarioPartenza, minutiPerSubtratta[i])},${dati.codiceTreno},${dati.data});
+                                    VALUES (${stazioni[i].nome},${stazioni[i + 1].nome},${orarioPartenzaCorrente},${fineStimata},${dati.codiceTreno},${dati.data});
                 `);
 
-        orarioPartenza = sommaMinutiTimestamp(
-          orarioPartenza,
-          minutiPerSubtratta[i],
-        );
+        orarioArrivoCorrente = fineStimata;
+        orarioPartenzaCorrente = fineStimata;
 
         if (i === minutiPerSubtratta.length - 1) {
           transactionQueries.push(sql`INSERT INTO traccia_corrente (orario_arrivo,orario_partenza,stazione, treno, data)
                                         VALUES (
-                                        ${orarioPartenza},
+                                        ${fineStimata},
                                         ${null},
                                         ${stazioni[i + 1].nome},
                                         ${dati.codiceTreno},
@@ -784,6 +795,7 @@ export async function createCorsaWithRitorno(
       minutiPerSubtrattaAndata.reverse();
     }
 
+    let orarioArrivoAndata: string | null = null;
     let orarioPartenzaAndata = inizioAndataTs;
     const tracceAndata: {
       stazione: string;
@@ -819,7 +831,7 @@ export async function createCorsaWithRitorno(
       } else {
         tracceAndata.push({
           stazione: stazioniAndata[i].nome,
-          arrivo: i > 0 ? orarioPartenzaAndata : null,
+          arrivo: orarioArrivoAndata,
           partenza: orarioPartenzaAndata,
         });
 
@@ -830,19 +842,20 @@ export async function createCorsaWithRitorno(
           fine: fineStimata,
         });
 
+        orarioArrivoAndata = fineStimata;
         orarioPartenzaAndata = fineStimata;
 
         if (i === minutiPerSubtrattaAndata.length - 1) {
           tracceAndata.push({
             stazione: stazioniAndata[i + 1].nome,
-            arrivo: orarioPartenzaAndata,
+            arrivo: fineStimata,
             partenza: null,
           });
         }
       }
     }
 
-    const arrivoAndataTs = orarioPartenzaAndata;
+    const arrivoAndataTs = orarioArrivoAndata!;
 
     // Controllo che il ritorno non parta prima dell'arrivo dell'andata
     const diffAndataRitorno = differenzaInMinuti(
@@ -877,6 +890,7 @@ export async function createCorsaWithRitorno(
       minutiPerSubtrattaRitorno.reverse();
     }
 
+    let orarioArrivoRitorno: string | null = null;
     let orarioPartenzaRitorno = inizioRitornoTs;
     const tracceRitorno: {
       stazione: string;
@@ -912,7 +926,7 @@ export async function createCorsaWithRitorno(
       } else {
         tracceRitorno.push({
           stazione: stazioniRitorno[i].nome,
-          arrivo: i > 0 ? orarioPartenzaRitorno : null,
+          arrivo: orarioArrivoRitorno,
           partenza: orarioPartenzaRitorno,
         });
 
@@ -923,19 +937,20 @@ export async function createCorsaWithRitorno(
           fine: fineStimata,
         });
 
+        orarioArrivoRitorno = fineStimata;
         orarioPartenzaRitorno = fineStimata;
 
         if (i === minutiPerSubtrattaRitorno.length - 1) {
           tracceRitorno.push({
             stazione: stazioniRitorno[i + 1].nome,
-            arrivo: orarioPartenzaRitorno,
+            arrivo: fineStimata,
             partenza: null,
           });
         }
       }
     }
 
-    const arrivoRitornoTs = orarioPartenzaRitorno;
+    const arrivoRitornoTs = orarioArrivoRitorno!;
 
     // Controllo rispetto alla prossima partenza prevista per lo stesso convoglio
     if (prossimaPartenza.length > 0) {
