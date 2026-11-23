@@ -42,17 +42,18 @@ const modelloGiornalieroRitorno = [
   { stazione: "Torre Spaventa", arrivo: "15:27:00", partenza: null },
 ];
 
+type TracciaCorrenteDefault = Omit<TracciaCorrente, "convoglio">;
 export function generaTracce(
   dataInizio: Date,
   dataFine: Date,
-): TracciaCorrente[] {
+): TracciaCorrenteDefault[] {
   if (dataInizio > dataFine) {
     const temp: Date = dataInizio;
     dataInizio = dataFine;
     dataFine = temp;
   }
 
-  const tutteLeTracce: TracciaCorrente[] = [];
+  const tutteLeTracce: TracciaCorrenteDefault[] = [];
   for (
     let giorni = 0;
     giorni <= (dataFine.getTime() - dataInizio.getTime()) / (1000 * 3600 * 24);
@@ -83,7 +84,6 @@ export function generaTracce(
     });
   }
 
-  console.log(tutteLeTracce);
   return tutteLeTracce;
 }
 
@@ -171,16 +171,15 @@ export function generaSubtratte(dataInizio: Date, dataFine: Date): Subtratta[] {
 }
 
 // gestione orari
-export function creaTimestamp(data: Date, orario: string | null): string | null {
-
+export function creaTimestamp(
+  data: Date,
+  orario: string | null,
+): string | null {
   if (!orario) return null;
 
   const dataISO = data.toISOString().slice(0, 10);
 
-  return fromZonedTime(
-    `${dataISO}T${orario}`,
-    "Europe/Rome",
-  ).toISOString();
+  return fromZonedTime(`${dataISO}T${orario}`, "Europe/Rome").toISOString();
 }
 
 // restituisce la somma in minuti e i giorni aggiunti dall'orario iniziale
@@ -289,7 +288,7 @@ export function formattaTimeStamp(timestamp: string) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "Europe/Rome"
+    timeZone: "Europe/Rome",
   });
   return formattata;
 }
@@ -321,8 +320,14 @@ export function parseTimeToMinutes(
     });
     const parts = formatter.formatToParts(val);
     const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
-    const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
-    const s = parseInt(parts.find((p) => p.type === "second")?.value || "0", 10);
+    const m = parseInt(
+      parts.find((p) => p.type === "minute")?.value || "0",
+      10,
+    );
+    const s = parseInt(
+      parts.find((p) => p.type === "second")?.value || "0",
+      10,
+    );
     return h * 60 + m + s / 60;
   }
 
@@ -338,9 +343,18 @@ export function parseTimeToMinutes(
         hour12: false,
       });
       const parts = formatter.formatToParts(d);
-      const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
-      const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
-      const s = parseInt(parts.find((p) => p.type === "second")?.value || "0", 10);
+      const h = parseInt(
+        parts.find((p) => p.type === "hour")?.value || "0",
+        10,
+      );
+      const m = parseInt(
+        parts.find((p) => p.type === "minute")?.value || "0",
+        10,
+      );
+      const s = parseInt(
+        parts.find((p) => p.type === "second")?.value || "0",
+        10,
+      );
       return h * 60 + m + s / 60;
     }
   }

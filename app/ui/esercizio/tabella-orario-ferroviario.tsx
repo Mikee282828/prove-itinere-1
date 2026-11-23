@@ -74,9 +74,18 @@ export default function TabellaOrarioFerroviario({
       }
     });
     
+    const ordinaPerPartenza = (a: TracciaCorrente[], b: TracciaCorrente[]) => {
+      const depA = a[0]?.orario_partenza || a[0]?.orario_arrivo;
+      const depB = b[0]?.orario_partenza || b[0]?.orario_arrivo;
+      const msA = depA ? new Date(depA).getTime() : 0;
+      const msB = depB ? new Date(depB).getTime() : 0;
+      if (msA !== msB) return msA - msB;
+      return (a[0]?.treno || 0) - (b[0]?.treno || 0);
+    };
+
     return {
-      treniAndata: andata.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),
-      treniRitorno: ritorno.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),
+      treniAndata: andata.sort(ordinaPerPartenza),
+      treniRitorno: ritorno.sort(ordinaPerPartenza),
     };
   }, [tracce]);
 

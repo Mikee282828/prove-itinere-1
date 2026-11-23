@@ -169,6 +169,7 @@ export type FermataProcessata = {
 
 export type TrenoProcessato = {
   codice: number;
+  convoglio?: number;
   colore: (typeof COLORI_TRENI)[0];
   direzione: "andata" | "ritorno";
   fermate: FermataProcessata[];
@@ -214,6 +215,7 @@ export default function DiagrammaSpazioTempo({
     x: number;
     y: number;
     treno: number;
+    convoglio?: number;
     stazione: string;
     arr?: string | null;
     dep?: string | null;
@@ -314,8 +316,11 @@ export default function DiagrammaSpazioTempo({
         fermateOrd[fermateOrd.length - 1].t_dep ??
         tPartenza;
 
+      const convoglio = tracceTreno[0]?.convoglio;
+
       listaTreni.push({
         codice: cod,
+        convoglio,
         colore: COLORI_TRENI[colorIdx % COLORI_TRENI.length],
         direzione,
         fermate: fermateOrd,
@@ -340,6 +345,7 @@ export default function DiagrammaSpazioTempo({
     // Ogni spostamento tra fermata i e fermata i+1 occupa la subtratta tra stazione_A e stazione_B
     type OccupazioneSubtratta = {
       treno: number;
+      convoglio?: number;
       direzione: "andata" | "ritorno";
       stazMin: string;
       stazMax: string;
@@ -363,6 +369,7 @@ export default function DiagrammaSpazioTempo({
 
           occupazioni.push({
             treno: tr.codice,
+            convoglio: tr.convoglio,
             direzione: tr.direzione,
             stazMin,
             stazMax,
@@ -399,8 +406,8 @@ export default function DiagrammaSpazioTempo({
               tipo: isFrontale ? "scontro_frontale" : "tamponamento",
               intervallo: `${formatMinutesToTime(overlapInizio)} - ${formatMinutesToTime(overlapFine)}`,
               descrizione: isFrontale
-                ? `Violazione Vincolo 1 (Scontro frontale): Treno ${occ1.treno} e Treno ${occ2.treno} percorrono in direzioni opposte la stessa subtratta contemporaneamente.`
-                : `Violazione Vincolo 2 (Tamponamento): Treno ${occ1.treno} e Treno ${occ2.treno} impegnano la stessa subtratta nella stessa direzione senza attendere la liberazione.`,
+                ? `Violazione Vincolo 1 (Scontro frontale): Treno ${occ1.treno}${occ1.convoglio ? ` (Conv. ${occ1.convoglio})` : ""} e Treno ${occ2.treno}${occ2.convoglio ? ` (Conv. ${occ2.convoglio})` : ""} percorrono in direzioni opposte la stessa subtratta contemporaneamente.`
+                : `Violazione Vincolo 2 (Tamponamento): Treno ${occ1.treno}${occ1.convoglio ? ` (Conv. ${occ1.convoglio})` : ""} e Treno ${occ2.treno}${occ2.convoglio ? ` (Conv. ${occ2.convoglio})` : ""} impegnano la stessa subtratta nella stessa direzione senza attendere la liberazione.`,
             });
           }
         }
@@ -708,6 +715,11 @@ export default function DiagrammaSpazioTempo({
                 style={{ backgroundColor: t.colore.stroke }}
               />
               <span>Treno {t.codice}</span>
+              {t.convoglio && (
+                <span className="text-[10px] font-normal opacity-85">
+                  (Conv. {t.convoglio})
+                </span>
+              )}
               <span className="text-[10px] opacity-75">
                 {t.direzione === "andata" ? (
                   <span className="inline-flex items-center gap-0.5">
@@ -943,6 +955,7 @@ export default function DiagrammaSpazioTempo({
                             x: e.clientX,
                             y: e.clientY - 15,
                             treno: treno.codice,
+                            convoglio: treno.convoglio,
                             stazione: `${fA.stazione} ➔ ${fB.stazione}`,
                             arr: formatMinutesToTime(tArrB),
                             dep: formatMinutesToTime(tDepA),
@@ -962,9 +975,9 @@ export default function DiagrammaSpazioTempo({
                       {i === 0 && (
                         <g transform={`translate(${midX}, ${midY})`}>
                           <rect
-                            x="-22"
+                            x={treno.convoglio ? "-34" : "-22"}
                             y="-9"
-                            width="44"
+                            width={treno.convoglio ? "68" : "44"}
                             height="18"
                             rx="9"
                             fill={treno.colore.stroke}
@@ -977,7 +990,7 @@ export default function DiagrammaSpazioTempo({
                             textAnchor="middle"
                             className="text-[9px] font-bold fill-white tracking-wide"
                           >
-                            T{treno.codice}
+                            T{treno.codice}{treno.convoglio ? ` · C${treno.convoglio}` : ""}
                           </text>
                         </g>
                       )}
@@ -1026,6 +1039,7 @@ export default function DiagrammaSpazioTempo({
                             x: e.clientX,
                             y: e.clientY - 15,
                             treno: treno.codice,
+                            convoglio: treno.convoglio,
                             stazione: f.stazione,
                             arr: f.t_arr !== null ? formatMinutesToTime(f.t_arr) : "-",
                             dep: f.t_dep !== null ? formatMinutesToTime(f.t_dep) : "-",
@@ -1093,6 +1107,7 @@ export default function DiagrammaSpazioTempo({
                               x: e.clientX,
                               y: e.clientY - 15,
                               treno: treno.codice,
+                              convoglio: treno.convoglio,
                               stazione: f.stazione,
                               arr: f.t_arr !== null ? formatMinutesToTime(f.t_arr) : "-",
                               dep: f.t_dep !== null ? formatMinutesToTime(f.t_dep) : "-",
@@ -1136,7 +1151,12 @@ export default function DiagrammaSpazioTempo({
             <div className="flex items-center justify-between gap-3 font-bold border-b border-gray-700 pb-1">
               <span className="flex items-center gap-1.5">
                 <TrainIcon className="h-3.5 w-3.5 text-lime-400" />
-                Treno {tooltip.treno} (conv {})
+                <span>Treno {tooltip.treno}</span>
+                {tooltip.convoglio && (
+                  <span className="text-[11px] font-normal text-amber-300">
+                    &bull; Convoglio {tooltip.convoglio}
+                  </span>
+                )}
               </span>
               <span className="text-[10px] text-gray-400 capitalize">
                 {tooltip.direzione}
