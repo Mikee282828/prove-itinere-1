@@ -47,10 +47,115 @@ const COLORI_TRENI = [
 ];
 
 function formatMinutesToTime(min: number): string {
-  const totSec = Math.round(min * 60);
-  const h = Math.floor(totSec / 3600) % 24;
+  const dayOffset = Math.floor(min / 1440);
+  const mInDay = ((min % 1440) + 1440) % 1440;
+  const totSec = Math.round(mInDay * 60);
+  const h = Math.floor(totSec / 3600);
   const m = Math.floor((totSec % 3600) / 60);
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  const timeStr = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  if (dayOffset > 0) {
+    return `${timeStr} (+${dayOffset}g)`;
+  }
+  return timeStr;
+}
+
+function getBaseDate(
+  dataSelezionata?: string,
+  tracce?: TracciaCorrente[] | null,
+): { y: number; m: number; d: number } {
+  if (dataSelezionata && dataSelezionata.trim().length >= 8) {
+    const parts = dataSelezionata.trim().split("-").map(Number);
+    if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+      return { y: parts[0], m: parts[1], d: parts[2] };
+    }
+  }
+
+  if (tracce && tracce.length > 0) {
+    let earliestMs = Infinity;
+    for (const tr of tracce) {
+      for (const field of [tr.data, tr.orario_partenza, tr.orario_arrivo]) {
+        if (!field) continue;
+        const d = field instanceof Date ? field : new Date(String(field));
+        const ms = d.getTime();
+        if (!isNaN(ms) && ms < earliestMs) {
+          earliestMs = ms;
+        }
+      }
+    }
+
+    if (isFinite(earliestMs)) {
+      const d = new Date(earliestMs);
+      const formatter = new Intl.DateTimeFormat("it-IT", {
+        timeZone: "Europe/Rome",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      });
+      const p = formatter.formatToParts(d);
+      return {
+        y: parseInt(p.find((x) => x.type === "year")?.value || "2070", 10),
+        m: parseInt(p.find((x) => x.type === "month")?.value || "1", 10),
+        d: parseInt(p.find((x) => x.type === "day")?.value || "1", 10),
+      };
+    }
+  }
+
+  return { y: 2070, m: 1, d: 1 };
+}
+
+function parseContinuousMinutes(
+  val: string | Date | null | undefined,
+  baseDate: { y: number; m: number; d: number },
+): number | null {
+  if (!val) return null;
+
+  let d: Date | null = null;
+  if (val instanceof Date) {
+    if (!isNaN(val.getTime())) d = val;
+  } else if (typeof val === "string") {
+    const str = val.trim();
+    // Se è solo formato HH:mm o HH:mm:ss senza data
+    const matchSimpleTime = str.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+    if (matchSimpleTime) {
+      const h = parseInt(matchSimpleTime[1], 10);
+      const m = parseInt(matchSimpleTime[2], 10);
+      const s = matchSimpleTime[3] ? parseInt(matchSimpleTime[3], 10) : 0;
+      return h * 60 + m + s / 60;
+    }
+
+    const parsed = new Date(str);
+    if (!isNaN(parsed.getTime())) {
+      d = parsed;
+    }
+  }
+
+  if (d) {
+    const formatter = new Intl.DateTimeFormat("it-IT", {
+      timeZone: "Europe/Rome",
+      year: "numeric",
+      month: "numeric",
+      day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
+      hour12: false,
+    });
+    const parts = formatter.formatToParts(d);
+    const yr = parseInt(parts.find((p) => p.type === "year")?.value || String(baseDate.y), 10);
+    const mo = parseInt(parts.find((p) => p.type === "month")?.value || String(baseDate.m), 10);
+    const dy = parseInt(parts.find((p) => p.type === "day")?.value || String(baseDate.d), 10);
+    const h = parseInt(parts.find((p) => p.type === "hour")?.value || "0", 10);
+    const m = parseInt(parts.find((p) => p.type === "minute")?.value || "0", 10);
+    const s = parseInt(parts.find((p) => p.type === "second")?.value || "0", 10);
+
+    const msTarget = Date.UTC(yr, mo - 1, dy);
+    const msBase = Date.UTC(baseDate.y, baseDate.m - 1, baseDate.d);
+    const dayDiff = Math.round((msTarget - msBase) / (24 * 60 * 60 * 1000));
+
+    return dayDiff * 1440 + h * 60 + m + s / 60;
+  }
+
+  return null;
 }
 
 export type FermataProcessata = {
@@ -142,6 +247,8 @@ export default function DiagrammaSpazioTempo({
       };
     }
 
+    const baseDate = getBaseDate(dataSelezionata, tracce);
+
     // Raggruppa per treno
     const perTreno = new Map<number, TracciaCorrente[]>();
     tracce.forEach((tr) => {
@@ -157,11 +264,11 @@ export default function DiagrammaSpazioTempo({
 
     let colorIdx = 0;
     perTreno.forEach((tracceTreno, cod) => {
-      // Ordina le fermate cronologicamente
+      // Ordina le fermate cronologicamente con minuti continui
       const fermateOrd: FermataProcessata[] = tracceTreno
         .map((tr) => {
-          const t_arr = parseTimeToMinutes(tr.orario_arrivo);
-          const t_dep = parseTimeToMinutes(tr.orario_partenza);
+          const t_arr = parseContinuousMinutes(tr.orario_arrivo, baseDate);
+          const t_dep = parseContinuousMinutes(tr.orario_partenza, baseDate);
 
           if (t_arr !== null) {
             overallMin = Math.min(overallMin, t_arr);
@@ -225,9 +332,9 @@ export default function DiagrammaSpazioTempo({
       overallMax = 960;
     }
 
-    // Arrotonda ai 30 minuti precedenti e successivi per un asse pulito
+    // Arrotonda ai 30 minuti precedenti e successivi per un asse pulito (senza limitare artificialmente a 1440)
     const minTimeMinuti = Math.max(0, Math.floor((overallMin - 15) / 30) * 30);
-    const maxTimeMinuti = Math.min(1440, Math.ceil((overallMax + 20) / 30) * 30);
+    const maxTimeMinuti = Math.ceil((overallMax + 30) / 30) * 30;
 
     // ANALISI CONFLITTI E VINCOLI SUBTRATTE
     // Ogni spostamento tra fermata i e fermata i+1 occupa la subtratta tra stazione_A e stazione_B
@@ -306,7 +413,7 @@ export default function DiagrammaSpazioTempo({
       maxTimeMinuti: Math.max(minTimeMinuti + 60, maxTimeMinuti),
       conflitti: conflittiTrovati,
     };
-  }, [tracce, listaStazioni, stazioniMap]);
+  }, [tracce, listaStazioni, stazioniMap, dataSelezionata]);
 
   // Dimensioni SVG
   const paddingLeft = 210;
@@ -657,6 +764,7 @@ export default function DiagrammaSpazioTempo({
           {/* Griglia temporale verticale (ogni 30 min / 60 min) */}
           {timeTicks.map((tick) => {
             const x = getXForTime(tick.minuti);
+            const isDayChange = tick.minuti % 1440 === 0 && tick.minuti > 0;
             return (
               <g key={`time-${tick.minuti}`}>
                 <line
@@ -664,27 +772,29 @@ export default function DiagrammaSpazioTempo({
                   y1={paddingTop - 12}
                   x2={x}
                   y2={paddingTop + chartHeight + 12}
-                  stroke={tick.isHour ? "#cbd5e1" : "#e2e8f0"}
-                  strokeWidth={tick.isHour ? 1.5 : 1}
-                  strokeDasharray={tick.isHour ? "none" : "3,3"}
+                  stroke={isDayChange ? "#0f172a" : tick.isHour ? "#cbd5e1" : "#e2e8f0"}
+                  strokeWidth={isDayChange ? 2 : tick.isHour ? 1.5 : 1}
+                  strokeDasharray={isDayChange ? "none" : tick.isHour ? "none" : "3,3"}
                 />
                 {/* Etichetta superiore orario */}
                 <rect
-                  x={x - 22}
+                  x={x - 30}
                   y={paddingTop - 34}
-                  width="44"
+                  width="60"
                   height="18"
                   rx="4"
-                  fill={tick.isHour ? "#f1f5f9" : "transparent"}
+                  fill={isDayChange ? "#e2e8f0" : tick.isHour ? "#f1f5f9" : "transparent"}
                 />
                 <text
                   x={x}
                   y={paddingTop - 21}
                   textAnchor="middle"
                   className={`text-[11px] font-mono ${
-                    tick.isHour
-                      ? "font-bold fill-slate-800"
-                      : "fill-slate-500"
+                    isDayChange
+                      ? "font-extrabold fill-slate-900"
+                      : tick.isHour
+                        ? "font-bold fill-slate-800"
+                        : "fill-slate-500"
                   }`}
                 >
                   {tick.label}
@@ -695,9 +805,11 @@ export default function DiagrammaSpazioTempo({
                   y={paddingTop + chartHeight + 28}
                   textAnchor="middle"
                   className={`text-[11px] font-mono ${
-                    tick.isHour
-                      ? "font-bold fill-slate-800"
-                      : "fill-slate-500"
+                    isDayChange
+                      ? "font-extrabold fill-slate-900"
+                      : tick.isHour
+                        ? "font-bold fill-slate-800"
+                        : "fill-slate-500"
                   }`}
                 >
                   {tick.label}
@@ -827,10 +939,9 @@ export default function DiagrammaSpazioTempo({
                         strokeLinecap="round"
                         className="cursor-pointer hover:stroke-[4]"
                         onMouseEnter={(e) => {
-                          const rect = containerRef.current?.getBoundingClientRect();
                           setTooltip({
-                            x: e.clientX - (rect?.left || 0),
-                            y: e.clientY - (rect?.top || 0) - 20,
+                            x: e.clientX,
+                            y: e.clientY - 15,
                             treno: treno.codice,
                             stazione: `${fA.stazione} ➔ ${fB.stazione}`,
                             arr: formatMinutesToTime(tArrB),
@@ -838,6 +949,11 @@ export default function DiagrammaSpazioTempo({
                             attesa: 0,
                             direzione: treno.direzione,
                           });
+                        }}
+                        onMouseMove={(e) => {
+                          setTooltip((prev) =>
+                            prev ? { ...prev, x: e.clientX, y: e.clientY - 15 } : null,
+                          );
                         }}
                         onMouseLeave={() => setTooltip(null)}
                       />
@@ -906,17 +1022,21 @@ export default function DiagrammaSpazioTempo({
                         strokeDasharray={isAttesaSignificativa ? "none" : "none"}
                         className="cursor-pointer"
                         onMouseEnter={(e) => {
-                          const rect = containerRef.current?.getBoundingClientRect();
                           setTooltip({
-                            x: e.clientX - (rect?.left || 0),
-                            y: e.clientY - (rect?.top || 0) - 20,
+                            x: e.clientX,
+                            y: e.clientY - 15,
                             treno: treno.codice,
                             stazione: f.stazione,
-                            arr: formatOrario(f.orario_arrivo_raw),
-                            dep: formatOrario(f.orario_partenza_raw),
+                            arr: f.t_arr !== null ? formatMinutesToTime(f.t_arr) : "-",
+                            dep: f.t_dep !== null ? formatMinutesToTime(f.t_dep) : "-",
                             attesa: f.attesaMinuti,
                             direzione: treno.direzione,
                           });
+                        }}
+                        onMouseMove={(e) => {
+                          setTooltip((prev) =>
+                            prev ? { ...prev, x: e.clientX, y: e.clientY - 15 } : null,
+                          );
                         }}
                         onMouseLeave={() => setTooltip(null)}
                       />
@@ -944,14 +1064,14 @@ export default function DiagrammaSpazioTempo({
                   if (f.t_arr !== null) {
                     pts.push({
                       x: getXForTime(f.t_arr),
-                      label: `Arrivo ${formatOrario(f.orario_arrivo_raw)}`,
+                      label: `Arrivo ${formatMinutesToTime(f.t_arr)}`,
                       isDep: false,
                     });
                   }
                   if (f.t_dep !== null && (f.t_arr === null || f.t_dep !== f.t_arr)) {
                     pts.push({
                       x: getXForTime(f.t_dep),
-                      label: `Partenza ${formatOrario(f.orario_partenza_raw)}`,
+                      label: `Partenza ${formatMinutesToTime(f.t_dep)}`,
                       isDep: true,
                     });
                   }
@@ -969,17 +1089,21 @@ export default function DiagrammaSpazioTempo({
                           strokeWidth={2}
                           className="cursor-pointer hover:r-[6] transition-all"
                           onMouseEnter={(e) => {
-                            const rect = containerRef.current?.getBoundingClientRect();
                             setTooltip({
-                              x: e.clientX - (rect?.left || 0),
-                              y: e.clientY - (rect?.top || 0) - 20,
+                              x: e.clientX,
+                              y: e.clientY - 15,
                               treno: treno.codice,
                               stazione: f.stazione,
-                              arr: formatOrario(f.orario_arrivo_raw),
-                              dep: formatOrario(f.orario_partenza_raw),
+                              arr: f.t_arr !== null ? formatMinutesToTime(f.t_arr) : "-",
+                              dep: f.t_dep !== null ? formatMinutesToTime(f.t_dep) : "-",
                               attesa: f.attesaMinuti,
                               direzione: treno.direzione,
                             });
+                          }}
+                          onMouseMove={(e) => {
+                            setTooltip((prev) =>
+                              prev ? { ...prev, x: e.clientX, y: e.clientY - 15 } : null,
+                            );
                           }}
                           onMouseLeave={() => setTooltip(null)}
                         />
@@ -992,11 +1116,22 @@ export default function DiagrammaSpazioTempo({
           })}
         </svg>
 
-        {/* Floating Tooltip */}
+        {/* Floating Tooltip fisso rispetto alla viewport dello schermo */}
         {tooltip && (
           <div
-            className="absolute z-20 pointer-events-none bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-xl border border-gray-700 space-y-1 transform -translate-x-1/2 -translate-y-full"
-            style={{ left: tooltip.x, top: tooltip.y }}
+            className={`fixed z-50 pointer-events-none bg-gray-900 text-white rounded-lg px-3 py-2 text-xs shadow-2xl border border-gray-700 space-y-1 transform -translate-x-1/2 transition-transform duration-75 ${
+              tooltip.y < 120 ? "translate-y-4" : "-translate-y-full"
+            }`}
+            style={{
+              left: Math.max(
+                130,
+                Math.min(
+                  typeof window !== "undefined" ? window.innerWidth - 130 : 1000,
+                  tooltip.x,
+                ),
+              ),
+              top: tooltip.y,
+            }}
           >
             <div className="flex items-center justify-between gap-3 font-bold border-b border-gray-700 pb-1">
               <span className="flex items-center gap-1.5">
