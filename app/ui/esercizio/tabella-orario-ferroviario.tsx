@@ -164,6 +164,8 @@ export default function TabellaOrarioFerroviario({
               {treniAndata.map((trenoArray) => {
                 const cod = trenoArray[0]?.treno;
                 const dataRaw = trenoArray[0]?.data;
+                const conv = trenoArray[0]?.convoglio
+
                 const dataStr = dataRaw
                   ? (dataRaw instanceof Date ? dataRaw.toISOString().slice(0, 10) : String(dataRaw))
                   : "";
@@ -181,10 +183,10 @@ export default function TabellaOrarioFerroviario({
                       {cod}
                     </Link>
                     <div className="text-[10px] text-gray-500 font-normal mt-0.5">
-                      omn
+                      conv
                     </div>
                     <div className="text-[9px] text-gray-400 font-normal">
-                      2 e 3
+                      {conv}
                     </div>
                   </th>
                 );
@@ -221,6 +223,7 @@ export default function TabellaOrarioFerroviario({
               {treniRitorno.map((trenoArray) => {
                 const cod = trenoArray[0]?.treno;
                 const dataRaw = trenoArray[0]?.data;
+                const conv = trenoArray[0]?.convoglio;
                 const dataStr = dataRaw
                   ? (dataRaw instanceof Date ? dataRaw.toISOString().slice(0, 10) : String(dataRaw))
                   : "";
@@ -238,10 +241,10 @@ export default function TabellaOrarioFerroviario({
                       {cod}
                     </Link>
                     <div className="text-[10px] text-gray-500 font-normal mt-0.5">
-                      omn
+                      conv
                     </div>
                     <div className="text-[9px] text-gray-400 font-normal">
-                      2 e 3
+                      {conv}
                     </div>
                   </th>
                 );

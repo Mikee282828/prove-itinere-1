@@ -60,6 +60,7 @@ export type TracciaCorrente = {
   stazione: string;
   data: Date;
   treno: number;
+  convoglio: number;
 };
 
 //10

@@ -1136,7 +1136,7 @@ export default function DiagrammaSpazioTempo({
             <div className="flex items-center justify-between gap-3 font-bold border-b border-gray-700 pb-1">
               <span className="flex items-center gap-1.5">
                 <TrainIcon className="h-3.5 w-3.5 text-lime-400" />
-                Treno {tooltip.treno}
+                Treno {tooltip.treno} (conv {})
               </span>
               <span className="text-[10px] text-gray-400 capitalize">
                 {tooltip.direzione}

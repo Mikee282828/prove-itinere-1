@@ -194,8 +194,9 @@ export async function fetchTracceCorrenti(
 ): Promise<TracciaCorrente[]> {
   try {
     const tracce = await sql`
-    SELECT * from traccia_corrente
-    WHERE data = ${data}
+    SELECT tr.orario_arrivo,tr.orario_partenza,tr.stazione,tr.data,treno.convoglio,tr.treno from traccia_corrente tr
+    INNER JOIN treno ON tr.treno = treno.codice AND tr.data = treno.data
+    WHERE tr.data = ${data}
     ORDER BY orario_partenza ASC, orario_arrivo ASC;
     `;
     //console.log(tracce);
