@@ -56,9 +56,13 @@ export default function TabellaOrarioFerroviario({
     perTreno.forEach((arr) => {
       // Ordina cronologicamente
       const sorted = [...arr].sort((a, b) => {
-        const timeA = a.orario_partenza || a.orario_arrivo || "";
-        const timeB = b.orario_partenza || b.orario_arrivo || "";
-        return String(timeA).localeCompare(String(timeB));
+        const timeA = a.orario_partenza || a.orario_arrivo;
+        const timeB = b.orario_partenza || b.orario_arrivo;
+
+        const msA = timeA ? new Date(timeA).getTime() : 0;
+        const msB = timeB ? new Date(timeB).getTime() : 0;
+
+        return msA - msB;
       });
 
       // Se la prima stazione registrata è Torre Spaventa o ha arrivo nullo a Torre Spaventa -> Andata
@@ -69,7 +73,7 @@ export default function TabellaOrarioFerroviario({
         ritorno.push(sorted);
       }
     });
-
+    
     return {
       treniAndata: andata.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),
       treniRitorno: ritorno.sort((a, b) => (a[0]?.treno || 0) - (b[0]?.treno || 0)),

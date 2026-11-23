@@ -195,7 +195,7 @@ export async function fetchTracceCorrenti(
   try {
     const tracce = await sql`
     SELECT * from traccia_corrente
-    WHERE data = ${data} AND data >= NOW()::DATE
+    WHERE data = ${data}
     ORDER BY orario_partenza ASC, orario_arrivo ASC;
     `;
     //console.log(tracce);

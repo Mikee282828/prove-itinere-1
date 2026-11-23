@@ -610,6 +610,8 @@ export async function createCorsa(
   redirect("/esercizio"); // redirect
 }
 
+// -------------CON RITORNO-------------
+
 const corsaWithRitornoSchema = z.object({
   data: z.iso.date("Inserire la data!"),
   codiceTreno: z.coerce
