@@ -372,7 +372,8 @@ export const traccePassate: TracciaPassata[] = [
   },
 ];
 //9
-export const tracceCorrenti: TracciaCorrente[] = generaTracce(new Date("2070-01-01"),new Date("2070-01-02"));
+type TracciaCorrenteDefault = Omit<TracciaCorrente, "convoglio">;
+export const tracceCorrenti: TracciaCorrenteDefault[] = generaTracce(new Date("2070-01-01"),new Date("2070-01-02"));
 //10
 export const prenotazioni: Prenotazione[] = [
   {
