@@ -4,6 +4,7 @@ import {
   MaterialeRotabile,
   Stazione,
   TracciaCorrente,
+  TracciaCorrenteDefault,
   Treno,
 } from "./definitions";
 import { neon } from "@neondatabase/serverless";
@@ -210,7 +211,7 @@ export async function fetchTracceCorrenti(
 export async function fetchTracceCorrentiConId(
   data: string,
   codiceTreno: string,
-): Promise<TracciaCorrente[]> {
+): Promise<TracciaCorrenteDefault[]> {
   try {
     const tracce = await sql`
     SELECT * from traccia_corrente
@@ -218,7 +219,7 @@ export async function fetchTracceCorrentiConId(
     ORDER BY orario_partenza ASC;
     `;
     //console.log(tracce);
-    return tracce as TracciaCorrente[];
+    return tracce as TracciaCorrenteDefault[];
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Failed to fetch data.");

@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 import { Stazione, TracciaCorrente } from "@/app/lib/definitions";
-import { formatOrario } from "@/app/lib/utils";
+import { estraiData, formatOrario } from "@/app/lib/utils";
 import Link from "next/link";
 import { ArrowDown, ArrowUp, TrainIcon, AlertTriangle } from "lucide-react";
 
@@ -175,9 +175,7 @@ export default function TabellaOrarioFerroviario({
                 const dataRaw = trenoArray[0]?.data;
                 const conv = trenoArray[0]?.convoglio
 
-                const dataStr = dataRaw
-                  ? (dataRaw instanceof Date ? dataRaw.toISOString().slice(0, 10) : String(dataRaw))
-                  : "";
+                const dataStr = estraiData(dataRaw) || "";
 
                 return (
                   <th
@@ -233,9 +231,7 @@ export default function TabellaOrarioFerroviario({
                 const cod = trenoArray[0]?.treno;
                 const dataRaw = trenoArray[0]?.data;
                 const conv = trenoArray[0]?.convoglio;
-                const dataStr = dataRaw
-                  ? (dataRaw instanceof Date ? dataRaw.toISOString().slice(0, 10) : String(dataRaw))
-                  : "";
+                const dataStr = estraiData(dataRaw) || "";
 
                 return (
                   <th
